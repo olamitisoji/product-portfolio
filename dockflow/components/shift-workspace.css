@@ -16,7 +16,8 @@
   padding: 17px 20px 13px; border-bottom: 1px solid #dce1d7;
 }
 .analyst-head h2 { margin: 0; font: 500 26px/1.1 Georgia, serif; color: #183c39; letter-spacing: -.04em; }
-.analyst-head p, .analyst-compose small { margin: 5px 0 0; color: #54665d; font-size: 12px; }
+.analyst-head p { margin: 5px 0 0; color: #54665d; font-size: 12px; }
+.analyst-head .analyst-coverage { color: #78501e; }
 .analyst-actions { display: flex; gap: 2px; }
 .analyst-actions button {
   display: grid; place-items: center; width: 34px; height: 34px;
@@ -59,7 +60,6 @@
   border-radius: 4px; background: #244f4c; color: white;
 }
 .analyst-form button:disabled { background: #d8ded6; color: #576760; }
-.analyst-compose small { display: block; margin-top: 7px; font-size: 11px; }
 @media (max-width: 600px) {
   .analyst-head, .analyst-scroll { padding: 14px; }
   .analyst-compose { padding: 0 14px 12px; }

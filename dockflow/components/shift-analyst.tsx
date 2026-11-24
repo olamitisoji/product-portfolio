@@ -6,7 +6,7 @@ import { usesSampleIdentities } from "@/lib/analyst-eligibility";
 import { MAX_PRIOR_QUESTIONS, MAX_PRIOR_EVIDENCE_IDS, type AnalystContext } from "@/lib/analyst-context";
 import { buildChuteMap } from "@/lib/chute-routing";
 import type { Scenario, PlanMode, TrailerStatus } from "@/lib/dock-types";
-import type { FloorPlan } from "@/lib/sort-floor";
+import { evaluateSortFloor, type FloorPlan } from "@/lib/sort-floor";
 import type { PickupWindow } from "@/lib/shift-priorities";
 import "./shift-workspace.css";
 
@@ -67,6 +67,15 @@ function scopeLabel({ scenario, context, pickup, mode }: Props) {
   return parts.join(" · ");
 }
 
+function floorCoverageNote({ scenario, floorPlan, context }: Props) {
+  if (context.view !== "floor") return "";
+  const { status, missingPackages } = evaluateSortFloor(scenario, floorPlan).coverage;
+  if (status === "closed") return "The floor forecast window is closed for the day.";
+  if (status !== "partial" && status !== "unavailable") return "";
+  const missing = missingPackages.toLocaleString("en-US") + " packages have missing or outdated destination profiles.";
+  return status === "partial" ? "Partial staffing forecast. " + missing : "Staffing forecast unavailable. " + missing;
+}
+
 function suggestedQuestions({ scenario, context, pickup }: Props) {
   const { chute, view, selectedTrailerId } = context;
   if (view === "floor") return [
@@ -117,6 +126,7 @@ export function ShiftAnalyst(props: Props) {
   const input = useRef<HTMLTextAreaElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const pending = useRef<AbortController | null>(null);
+  const coverageNote = floorCoverageNote(props);
   const scopeKey = JSON.stringify(context);
   const lastScope = useRef({ scenario, mode, floorPlan, pickup, scopeKey });
   const [question, setQuestion] = useState("");
@@ -201,7 +211,7 @@ export function ShiftAnalyst(props: Props) {
     <button type="button" className="ask-trigger" onClick={open}><Sparkles size={15} aria-hidden="true" />Ask Sortward</button>
     <dialog className="analyst-dialog" ref={dialog} onClose={cancel} aria-labelledby="analyst-title" aria-describedby="analyst-scope">
       <header className="analyst-head">
-        <div><h2 id="analyst-title">Shift analyst</h2><p id="analyst-scope">{scopeLabel(props)}</p></div>
+        <div><h2 id="analyst-title">Shift analyst</h2><p id="analyst-scope">{scopeLabel(props)}</p>{coverageNote && <p className="analyst-coverage">{coverageNote}</p>}</div>
         <div className="analyst-actions">
           {turns.length > 0 && <button type="button" aria-label="Start new conversation" title="Start new conversation" disabled={busy} onClick={reset}><RotateCcw size={16} /></button>}
           <button type="button" aria-label="Close analyst" onClick={() => dialog.current?.close()}><X size={18} /></button>
@@ -234,7 +244,6 @@ export function ShiftAnalyst(props: Props) {
             }} />
           <button type="submit" disabled={busy || !question.trim()} aria-label="Send question"><ArrowUp size={18} /></button>
         </form>
-        <small>OpenAI · 30 requests per day across the demo</small>
       </footer>
     </dialog>
   </>;

@@ -185,10 +185,10 @@ export async function handleShiftAnalyst(request: Request, env: AnalystEnv, deps
     const slot = await env.DB.prepare(reserveStatement).bind(now.toISOString().slice(0, 10)).first<{ requests: number }>();
     if (!slot) {
       const untilTomorrow = 86_400 - Math.floor(now.getTime() / 1000) % 86_400;
-      return json({ error: 'Today’s 30 shared questions have been used. The demo resets at midnight UTC.' }, 429, { 'Retry-After': String(untilTomorrow) });
+      return json({ error: 'The analyst is available again at midnight UTC.' }, 429, { 'Retry-After': String(untilTomorrow) });
     }
   } catch {
-    return json({ error: 'The daily usage limit is unavailable. Please try again later.' }, 503);
+    return json({ error: 'The analyst is temporarily unavailable. Please try again later.' }, 503);
   }
   try {
     const response = await (deps.fetcher ?? fetch)('https://api.openai.com/v1/responses', {
