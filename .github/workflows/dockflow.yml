@@ -1,4 +1,4 @@
-name: Dockflow checks
+name: Sortward checks
 
 on:
   push:
@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   dockflow:
+    name: Sortward
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:

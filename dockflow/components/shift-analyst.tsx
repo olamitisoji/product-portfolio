@@ -85,7 +85,7 @@ export function ShiftAnalyst({ scenario, mode, floorPlan, pickup, selectedId, on
   const starters = ["Which yard trailer should we unload next?", trailerQuestion, "What would ease the next sort bottleneck?"];
 
   return <>
-    <button type="button" className="ask-trigger" onClick={open}><Sparkles size={15} aria-hidden="true" />Ask Dockflow</button>
+    <button type="button" className="ask-trigger" onClick={open}><Sparkles size={15} aria-hidden="true" />Ask Sortward</button>
     <dialog className="analyst-dialog" ref={dialog} onClose={cancel} aria-labelledby="analyst-title">
       <header className="analyst-head"><div><Sparkles size={18} aria-hidden="true" /><h2 id="analyst-title">Shift analyst</h2></div><button aria-label="Close analyst" className="analyst-close" onClick={() => dialog.current?.close()}><X size={18} /></button></header>
       <div className="analyst-body">

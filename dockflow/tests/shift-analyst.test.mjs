@@ -8,7 +8,7 @@ import { usesSampleIdentities } from '../lib/analyst-eligibility.ts';
 import { BASE_FLOOR_PLAN, moveFloorResource } from '../lib/sort-floor.ts';
 import { advanceClock } from '../lib/dock-engine.ts';
 
-const endpoint = 'https://dockflow.example/api/shift-analyst';
+const endpoint = 'https://sortward.example/api/shift-analyst';
 const post = (value) => new Request(endpoint, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value),
 });
@@ -122,14 +122,14 @@ test('explicit cross-site submissions are rejected before body parsing and quota
   const h = harness(t);
   for (const headers of [
     { Origin: 'https://other.example' }, { Origin: 'null' }, { 'Sec-Fetch-Site': 'cross-site' },
-    { Origin: 'https://dockflow.example', 'Sec-Fetch-Site': 'cross-site' },
+    { Origin: 'https://sortward.example', 'Sec-Fetch-Site': 'cross-site' },
   ]) {
     const r = await h.send(new Request(endpoint, { method: 'POST', headers, body: 'invalid' }));
     assert.equal(r.status, 403);
   }
   assert.equal(h.requests(), 0);
   const sameSite = post(query());
-  sameSite.headers.set('Origin', 'https://dockflow.example');
+  sameSite.headers.set('Origin', 'https://sortward.example');
   sameSite.headers.set('Sec-Fetch-Site', 'same-origin');
   assert.equal((await h.send(sameSite)).status, 200);
 });

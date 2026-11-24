@@ -1,6 +1,6 @@
-# Dockflow shift workflow
+# Sortward shift workflow
 
-The shift lead starts with a trailer’s package mix, identifies the time-sensitive work, checks the proposed door, then looks downstream at the sort floor. All views read the same fictional facility and trailer state. Dockflow uses independent rules for its public demonstration.
+The shift lead starts with a trailer’s package mix, identifies the time-sensitive work, checks the proposed door, then looks downstream at the sort floor. All views read the same fictional facility and trailer state. Sortward uses independent rules for its public demonstration.
 
 ## Manifest and destination heatmap
 

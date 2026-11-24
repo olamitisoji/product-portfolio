@@ -1,8 +1,8 @@
-# Dockflow
+# Sortward
 
-[Open Dockflow](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
+[Open Sortward](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
-A shift lead has several decisions to make before a trailer unloads. Where do its packages need to go? How much is due in the next pickup? Can the suggested door take this freight? Where will the team need more people? Dockflow connects these decisions in an independent simulator built with fictional manifests, door rules and staffing assumptions.
+A shift lead has several decisions to make before a trailer unloads. Where do its packages need to go? How much is due in the next pickup? Can the suggested door take this freight? Where will the team need more people? Sortward connects these decisions in an independent simulator built with fictional manifests, door rules and staffing assumptions.
 
 ## Try a shift
 
@@ -12,13 +12,13 @@ A shift lead has several decisions to make before a trailer unloads. Where do it
 4. Accept a simulated assignment. Its door becomes occupied and the heatmap updates. Mark the trailer unloaded to release the door, or use Undo to return to the previous state.
 5. Open **Sort floor** to see where the next hour’s freight exceeds chute or crew capacity. Move a chute or a crew member between destinations and compare the remaining shortfall.
 
-The package-size cells come from synthetic manifests. Older version 1 snapshots still open. When a snapshot lacks size detail, Dockflow shows a dash. Loading a newly generated preset supplies a complete example.
+The package-size cells come from synthetic manifests. Older version 1 snapshots still open. When a snapshot lacks size detail, Sortward shows a dash. Loading a newly generated preset supplies a complete example.
 
 ## Ask about the shift
 
-Open **Ask Dockflow** and ask which yard trailer should unload next, why a preassigned door is occupied, or whether moving a chute would ease the next bottleneck. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
+Open **Ask Sortward** and ask which yard trailer should unload next, why a preassigned door is occupied, or whether moving a chute would ease the next bottleneck. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
 
-When enabled, the hosted analyst shares a limit of 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
+The public demo shares 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
 
 ## How it works
 

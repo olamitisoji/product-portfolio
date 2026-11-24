@@ -1,10 +1,10 @@
-# Dockflow verification
+# Sortward verification
 
 Updated November 23, 2026. The simulator uses fictional trailers, manifests, shift counts and capacity assumptions.
 
 ## Automated checks
 
-Run `npm test` and `npm run typecheck` from the Dockflow directory. The November 23 run passed all 48 tests and the TypeScript check.
+Run `npm test` and `npm run typecheck` from the app directory. The November 23 run passed all 48 tests and the TypeScript check.
 
 | Decision | Cases covered |
 | --- | --- |

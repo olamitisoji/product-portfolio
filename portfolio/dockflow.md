@@ -1,8 +1,10 @@
-# Dockflow
+<a id="dockflow"></a>
+
+# Sortward
 
 ## Inbound shift planning
 
-[Try the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [View the source](https://github.com/olamitisoji/product-portfolio/tree/main/dockflow) · [View automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
+[Read on my portfolio](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/sortward/) · [Try the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [View the source](https://github.com/olamitisoji/product-portfolio/tree/main/dockflow) · [View automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
 **My role** · Product design and AI-assisted implementation of the public simulator
 
@@ -16,11 +18,11 @@ I completed a consolidated inbound heatmap that brought trailer status, pickup d
 
 ### What I rebuilt
 
-I used fictional manifests, an original facility layout and independent operating rules to recreate those decisions in Dockflow. A shift lead can drill from a pickup window to an individual trailer, see the mix going to each destination, and compare possible doors with the existing door plan and physical occupancy.
+I used fictional manifests, an original facility layout and independent operating rules to recreate those decisions in Sortward. A shift lead can drill from a pickup window to an individual trailer, see the mix going to each destination, and compare possible doors with the existing door plan and physical occupancy.
 
 I gave a shift lead two ways to read the floor. A timestamped fictional shift record shows how much work has been counted against the target at that point in the shift. The capacity view looks ahead. It compares forecast demand with the current crew and chute allocation, then recalculates the shortfall if the lead moves resources between areas. Approval and undo are features I added for the public demo so visitors can try an assignment and inspect the change in the plan.
 
-I built **Ask Dockflow** to answer questions about a sample shift using the current manifest, pickup window and capacity forecast, with citations a shift lead can inspect before making a decision.
+I built **Ask Sortward** to answer questions about a sample shift using the current manifest, pickup window and capacity forecast, with citations a shift lead can inspect before making a decision.
 
 ### Walk through a shift
 

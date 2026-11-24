@@ -24,7 +24,7 @@ const initial = (): Session => ({ scenario: createScenario(), audit: [] });
 
 // Files and browser storage are untrusted inputs: validate before using them.
 function readSession(value: unknown): Session {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Choose a synthetic Dockflow JSON snapshot.");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Choose a synthetic Sortward JSON snapshot.");
   const record = value as Record<string, unknown>;
   const parsed = parseScenario(Object.hasOwn(record, "scenario") ? record.scenario : record);
   if (!parsed.ok) throw new Error(parsed.errors.slice(0, 3).join(" "));
@@ -247,7 +247,7 @@ export default function DockDashboard() {
   return <div className="dock-shell">
     <aside className="sidebar">
       <a className="brand" href="#main" onClick={() => setView("overview")}>
-        <span className="brand-mark"><Warehouse size={21} strokeWidth={2} /></span>Dockflow
+        <span className="brand-mark"><Warehouse size={21} strokeWidth={2} /></span>Sortward
       </a>
       <nav aria-label="Main navigation">{nav.map(({ id, title, icon: Icon }) =>
         <button key={id} type="button" aria-current={view === id ? "page" : undefined} className={view === id ? "active" : ""} onClick={() => setView(id)}>
@@ -312,8 +312,8 @@ export default function DockDashboard() {
             </div>
             <div className="export-actions">
               <button className="button" disabled={!ready} onClick={() => changeScenario(refreshSyntheticProfiles(scenario), "Known destination profiles refreshed.")}><RefreshCw size={14} />Refresh profiles</button>
-              <button className="button" onClick={() => download(JSON.stringify(session, null, 2), "dockflow-synthetic-snapshot.json", "application/json")}><ArrowDownToLine size={14} />Export JSON</button>
-              <button className="button" onClick={() => download(exportScenarioCsv(scenario, result), "dockflow-synthetic-queue.csv", "text/csv")}><ArrowDownToLine size={14} />Export CSV</button>
+              <button className="button" onClick={() => download(JSON.stringify(session, null, 2), "sortward-synthetic-snapshot.json", "application/json")}><ArrowDownToLine size={14} />Export JSON</button>
+              <button className="button" onClick={() => download(exportScenarioCsv(scenario, result), "sortward-synthetic-queue.csv", "text/csv")}><ArrowDownToLine size={14} />Export CSV</button>
               <button className="button" disabled={!ready} onClick={() => fileRef.current?.click()}><Upload size={14} />Import JSON</button>
               <input className="visually-hidden" type="file" accept=".json,application/json" ref={fileRef} aria-label="Import synthetic snapshot" onChange={(event) => void importFile(event.target.files?.[0])} />
             </div>

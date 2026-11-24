@@ -1,4 +1,4 @@
-# Understanding Dockflow
+# Understanding Sortward
 
 Start with one row in the destination heatmap. It represents a trailer and shows where its packages are going. Compare its reported preassignment with the door review, then select the trailer to inspect the decision.
 
