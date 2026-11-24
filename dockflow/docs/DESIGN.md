@@ -2,6 +2,12 @@
 
 The shift lead starts with a trailer’s package mix, identifies the time-sensitive work, checks the proposed door, then looks downstream at the sort floor. All views read the same fictional facility and trailer state. Sortward uses independent rules for its public demonstration.
 
+## Facility plan and active trailers
+
+New examples use a 600,000-package weekly planning target. Seven operating days and two 12-hour shifts per day are scenario assumptions. The same plan supplies the average shift target and the hourly pace. The manifests represent the active trailer decisions at one point in time. Forecast demand uses its own one-hour horizon and eligibility rules. The timestamped shift report describes counted fictional progress against the facility plan.
+
+Older snapshots can lack a facility plan. They retain their saved counts and resources. The overview offers a current example that can be undone.
+
 ## Manifest and destination heatmap
 
 The initial presets contain twelve trailers, three destinations, six ordinary doors and a dedicated transfer door. Each trailer has its handling category, total volume, two disjoint deadline buckets, status, arrival time, destination profile and any preassigned or physical door.

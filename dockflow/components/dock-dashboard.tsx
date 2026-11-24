@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Activity, ArrowDownToLine, ArrowRight, Check, ChevronRight, Clock3, DoorOpen, LayoutDashboard, ListOrdered, RefreshCw, Search, Settings2, Truck, Undo2, Upload, Warehouse } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type SetStateAction, type CSSProperties } from "react";
+import { Box, ChevronDown, FileStack, FolderClosed, Layers3, Minus, PanelRight, Plus, Activity, ArrowDownToLine, ArrowRight, Check, ChevronRight, Clock3, DoorOpen, LayoutDashboard, ListOrdered, RefreshCw, Search, Settings2, Truck, Undo2, Upload, Warehouse } from "lucide-react";
 import { advanceClock, applyAssignment, buildLoadDoorBoard, completeTrailer, evaluate, exportScenarioCsv, feasibleDoors, parseScenario, refreshSyntheticProfiles } from "@/lib/dock-engine";
+import { VolumeProfile } from "@/components/volume-profile";
 import { createScenario } from "@/lib/dock-fixtures";
 import { LoadDoorBoard, warningNames } from "@/components/load-door-board";
 import { ShiftPriorityBoard } from "@/components/shift-priority-board";
 import { SortFloorBoard } from "@/components/sort-floor-board";
 import { ShiftAnalyst } from "@/components/shift-analyst";
 import { TrailerSummary } from "@/components/trailer-summary";
+import "./editor-canvas.css";
 import type { PickupWindow } from "@/lib/shift-priorities";
-import { BASE_FLOOR_PLAN, evaluateSortFloor } from "@/lib/sort-floor";
+import { getBaselineFloorPlan, evaluateSortFloor, type FloorPlan } from "@/lib/sort-floor";
 import { planPickupWindow } from "@/lib/shift-priorities";
 import type { AuditEvent, PlanMode, Preset, Scenario } from "@/lib/dock-types";
 
@@ -62,9 +64,12 @@ export default function DockDashboard() {
   const [history, setHistory] = useState<Session[]>([]);
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
-  const [floorPlan, setFloorPlan] = useState(BASE_FLOOR_PLAN);
+  const [floorOverride, setFloorOverride] = useState<{ baseline: FloorPlan; plan: FloorPlan } | null>(null);
   const [pickup, setPickup] = useState<PickupWindow>("current");
   const [floorRevision, setFloorRevision] = useState(0);
+  const [propertiesVisible, setPropertiesVisible] = useState(true);
+  const [zoom, setZoom] = useState(100);
+  const canvas = useRef<HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
   const [error, setError] = useState("");
@@ -79,6 +84,15 @@ export default function DockDashboard() {
   const [reason, setReason] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const scenario = session.scenario;
+  const baseline = getBaselineFloorPlan(scenario);
+  const floorPlan = floorOverride?.baseline === baseline ? floorOverride.plan : baseline;
+  function setFloorPlan(next: SetStateAction<FloorPlan>) {
+    setFloorOverride(previous => {
+      const current = previous?.baseline === baseline ? previous.plan : baseline;
+      const plan = typeof next === "function" ? next(current) : next;
+      return plan === baseline ? null : { baseline, plan };
+    });
+  }
   const result = useMemo(() => evaluate(scenario, mode), [scenario, mode]);
   const floorBaseline = useMemo(() => evaluateSortFloor(scenario), [scenario]);
   const currentPickup = useMemo(() => planPickupWindow(scenario, "current"), [scenario]);
@@ -105,6 +119,9 @@ export default function DockDashboard() {
           if (saved.length > 2_000_000) throw new Error("Saved snapshot is too large.");
           const restored = readSession(JSON.parse(saved));
           setSession(restored);
+          if (!restored.scenario.trailers.some(trailer => trailer.id === "TR-103")) {
+            setSelectedId(restored.scenario.trailers[0]?.id ?? "");
+          }
           setSeed(String(restored.scenario.seed));
         }
       } catch { setError("Saved data could not be restored. A fresh scenario is loaded."); }
@@ -138,6 +155,15 @@ export default function DockDashboard() {
     inspect(id);
     setDrawerOpen(true);
   }
+  function selectOnCanvas(id: string) {
+    if (window.matchMedia("(min-width: 1200px)").matches) {
+      inspect(id);
+      setPropertiesVisible(true);
+    } else openTrailer(id);
+  }
+  useEffect(() => {
+    canvas.current?.scrollTo({ top: 0 });
+  }, [view]);
   useEffect(() => {
     if (drawerOpen && !drawer.current?.open) drawer.current?.showModal();
   }, [drawerOpen]);
@@ -161,12 +187,14 @@ export default function DockDashboard() {
       commit({ scenario: action.scenario, audit: [...session.audit, action.event].slice(-1000) }, `${selected.id} marked unloaded. Its physical door is released.`);
     } catch (caught) { setError((caught as Error).message); }
   }
-  function reset() {
+  function reset(loadCurrentExample = false) {
     try {
-      const numericSeed = Number(seed);
-      if (!seed.trim()) throw new Error("Enter a whole-number seed.");
-      commit({ scenario: createScenario(preset, numericSeed), audit: [] }, `Loaded ${preset} scenario with seed ${numericSeed}.`);
-      setFloorPlan(BASE_FLOOR_PLAN); setPickup("current");
+      const numericSeed = loadCurrentExample ? scenario.seed : Number(seed);
+      if (!loadCurrentExample && !seed.trim()) throw new Error("Enter a whole-number seed.");
+      const nextPreset = loadCurrentExample ? "balanced" : preset;
+      commit({ scenario: createScenario(nextPreset, numericSeed), audit: [] }, `Loaded ${nextPreset} scenario with seed ${numericSeed}.`);
+      setPreset(nextPreset); setSeed(String(numericSeed));
+      setFloorOverride(null); setPickup("current");
       setFloorRevision((value) => value + 1);
       inspect("TR-103"); setFilter("all"); setSearch("");
     } catch (caught) { setError((caught as Error).message); }
@@ -177,7 +205,7 @@ export default function DockDashboard() {
       if (file.size > 2_000_000) throw new Error("Choose a JSON file smaller than 2 MB.");
       const imported = readSession(JSON.parse(await file.text()));
       commit(imported, "Snapshot imported.");
-      setFloorPlan(BASE_FLOOR_PLAN); setPickup("current");
+      setFloorOverride(null); setPickup("current");
       setFloorRevision((value) => value + 1);
       setSeed(String(imported.scenario.seed)); setSelectedId(imported.scenario.trailers[0]?.id ?? "");
       setSearch(""); setFilter("all"); setChosenDoor(""); setReason("");
@@ -238,32 +266,58 @@ export default function DockDashboard() {
     const previous = history.at(-1);
     if (!previous) return;
     setSession(previous);
+    if (!previous.scenario.trailers.some(trailer => trailer.id === selectedId)) inspect(previous.scenario.trailers[0]?.id ?? "");
     setHistory(history.slice(0, -1));
     setSeed(String(previous.scenario.seed));
     setNotice("Previous shift restored.");
     setError("");
   };
 
-  return <div className="dock-shell">
-    <aside className="sidebar">
-      <a className="brand" href="#main" onClick={() => setView("overview")}>
-        <span className="brand-mark"><Warehouse size={21} strokeWidth={2} /></span>Sortward
+  const volume = scenario.volumePlan;
+  const stages = [["yard", "In yard"], ["at_door", "At door"], ["expected", "Expected"], ["complete", "Completed"]] as const;
+  const showProperties = view === "overview" && propertiesVisible && !!selectedRow;
+  const dueOnSite = currentPickup.due ? (currentPickup.stageDue.yard + currentPickup.stageDue.at_door) / currentPickup.due * 100 : 0;
+  const proposedDoors = new Set(result.recommendations.flatMap(item => item.primary ? [item.primary.doorId] : []));
+  const maxZoneDemand = Math.max(1, ...floorBaseline.zones.map(zone => zone.packages));
+
+  return <div className="shift-studio">
+    <header className="studio-header">
+      <a className="studio-brand" href="#main" onClick={() => setView("overview")}>
+        <span className="sortward-symbol" aria-hidden="true"><i /><i /><i /></span>Sortward
       </a>
-      <nav aria-label="Main navigation">{nav.map(({ id, title, icon: Icon }) =>
-        <button key={id} type="button" aria-current={view === id ? "page" : undefined} className={view === id ? "active" : ""} onClick={() => setView(id)}>
-          <Icon size={17} strokeWidth={1.8} />{title}
-        </button>
-      )}</nav>
-      <select className="mobile-nav" aria-label="Workspace view" value={view} onChange={(event) => setView(event.target.value as View)}>
-        {nav.map(({ id, title }) => <option key={id} value={id}>{title}</option>)}
-      </select>
-    </aside>
-    <main id="main">
-      <header className="topbar">
-        <div className="workspace-name"><Warehouse size={16} /><strong>{facility}</strong><span className="data-mode">Simulation</span></div>
-        <div className="workspace-actions"><ShiftAnalyst scenario={scenario} mode={mode} pickup={pickup} floorPlan={floorPlan} selectedId={selectedId} onInspect={openTrailer} /></div>
-      </header>
-      <div className="main-content">
+      <div className="studio-file"><FileStack size={17} aria-hidden="true" /><strong>{facility}</strong><ChevronRight size={13} aria-hidden="true" /><span>Shift workspace</span></div>
+      <div className="studio-command"><span className="simulation-tag"><i />Simulation</span><ShiftAnalyst scenario={scenario} mode={mode} pickup={pickup} floorPlan={floorPlan} selectedId={selectedId} onInspect={openTrailer} /></div>
+    </header>
+    <div className={`studio-layout${showProperties ? " has-properties" : ""}`}>
+      <aside className="studio-sidebar">
+        <div className="rail-area">
+          <h2 className="rail-heading">Workspace</h2>
+          <nav className="view-list" aria-label="Main navigation">{nav.filter(item => item.id !== "assumptions").map(({ id, title, icon: Icon }) =>
+            <button key={id} type="button" aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>
+              <Icon size={16} strokeWidth={1.7} />{title}
+            </button>
+          )}</nav>
+        </div>
+        <div className="rail-layers">
+          <h2 className="rail-heading"><Layers3 size={14} aria-hidden="true" />Trailers <span>{scenario.trailers.length}</span></h2>
+          {stages.map(([stage, name]) => {
+            const items = loadRows.filter(row => row.trailer.status === stage);
+            return <details key={stage} open={stage === "yard"} className="layer-group">
+              <summary><ChevronRight size={13} className="layer-caret" /><FolderClosed size={14} />{name}<span>{items.length}</span></summary>
+              {items.map(({trailer}) => <button key={trailer.id} type="button" className="layer-row" aria-pressed={view === "overview" && trailer.id === selectedId} onClick={() => {setView("overview"); selectOnCanvas(trailer.id);}}>
+                <Box size={13} strokeWidth={1.6}/>{trailer.id}
+              </button>)}
+              {!items.length && <small className="layer-empty">No trailers</small>}
+            </details>;
+          })}
+        </div>
+        <button type="button" className="rail-settings" aria-current={view === "assumptions" ? "page" : undefined} onClick={() => setView("assumptions")}><Settings2 size={16} />Rules &amp; scenarios</button>
+      </aside>
+      <label className="studio-mobile-nav"><Layers3 size={15} /><select aria-label="Workspace view" value={view} onChange={event => setView(event.target.value as View)}>
+        {nav.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+      </select><ChevronDown size={14} /></label>
+      <main className="studio-canvas" id="main" ref={canvas}>
+        <div className="studio-sheet" style={view === "overview" ? { "--canvas-scale": zoom / 100 } as CSSProperties : undefined}>
         <div className="page-heading">
           <h1>{currentView?.title}</h1>
           <div className="shift-clock">
@@ -274,15 +328,25 @@ export default function DockDashboard() {
         </div>
         {(error || notice) && !drawerOpen && <div role="status" className={`notice ${error ? "notice-error" : ""}`}><span>{error || notice}</span></div>}
         {view === "overview" && <>
-          <div className="shift-path" aria-label="Shift decisions">
-            <button onClick={() => setView("priorities")}><span>Packages due by {time(scenario.currentDeadlineMinute)}</span><strong>{number(currentPickup.due)}</strong><ChevronRight size={15} /></button>
-            <button onClick={() => setView("doors")}><span>Proposed yard assignments</span><strong>{number(result.metrics.recommendationCount)}</strong><ChevronRight size={15} /></button>
-            <button onClick={() => setView("floor")}><span>Baseline sort shortfall</span><strong className={floorBaseline.baseGap ? "over-capacity" : ""}>{number(floorBaseline.baseGap)}<small> pkg</small></strong><ChevronRight size={15} /></button>
+          {volume ? <VolumeProfile plan={volume} activePackages={result.metrics.totalPackages} reports={scenario.shiftReports} nowMinute={scenario.nowMinute} /> : <div className="legacy-volume"><span>Saved shift · facility volume unspecified</span><button className="button" onClick={() => reset(true)}>Open 600,000 package weekly example</button></div>}
+          <div className="shift-metrics" aria-label="Shift decisions">
+            <button className="metric-pickup" onClick={() => setView("priorities")}>
+              <span className="metric-title">Due by {time(scenario.currentDeadlineMinute)}</span>
+              <strong>{number(currentPickup.due)}</strong><span className="metric-unit">packages</span>
+              <span className="metric-ring" title={`${Math.round(dueOnSite)}% already on site`} style={{background: `conic-gradient(#4a8194 0 ${dueOnSite}%, #cad9d7 ${dueOnSite}% 100%)`}} aria-hidden="true" />
+            </button>
+            <button className="metric-doors" onClick={() => setView("doors")}>
+              <span className="metric-title">Yard assignments</span>
+              <strong>{number(result.metrics.recommendationCount)}</strong><span className="metric-unit">proposed</span>
+              <span className="metric-docks" aria-hidden="true">{scenario.doors.slice(0, 9).map(door => <i key={door.id} className={proposedDoors.has(door.id) ? "assigned" : ""} title={door.id} />)}</span>
+            </button>
+            <button className="metric-floor" onClick={() => setView("floor")}>
+              <span className="metric-title">Sort shortfall</span>
+              <strong>{number(floorBaseline.baseGap)}</strong><span className="metric-unit">packages</span>
+              <span className="metric-bars" title="Forecast demand by zone" aria-hidden="true">{floorBaseline.zones.map(zone => <i key={zone.zone} style={{height:`${Math.max(5, zone.packages / maxZoneDemand * 100)}%`}} />)}</span>
+            </button>
           </div>
-          <div className="manifest-layout">
-            <LoadDoorBoard scenario={scenario} rows={loadRows} selectedId={selectedId} onInspect={openTrailer} />
-            {selectedRow && <TrailerSummary row={selectedRow} zones={scenario.zones} onInspect={openTrailer} />}
-          </div>
+          <LoadDoorBoard scenario={scenario} rows={loadRows} selectedId={selectedId} onInspect={selectOnCanvas} />
           <div className="overview-grid">
             <section className="panel demand">
               <div className="panel-heading"><h2>Destination demand</h2><span className="legend"><i />At door <i />Yard <i />Expected</span></div>
@@ -308,7 +372,7 @@ export default function DockDashboard() {
         {view === "assumptions" && <div className="assumptions-grid">
           <section className="panel rules"><div className="panel-heading"><h2>Scenario</h2></div>
             <div className="command-group"><label>Preset<select aria-label="Scenario preset" value={preset} onChange={(event) => setPreset(event.target.value as Preset)}><option value="balanced">Balanced</option><option value="surge">Volume surge</option><option value="disruption">Disruption</option></select></label>
-              <label className="seed-label">Seed<input aria-label="Scenario seed" value={seed} inputMode="numeric" onChange={(event) => setSeed(event.target.value)} /></label><button className="button" disabled={!ready} onClick={reset}>Load scenario</button>
+              <label className="seed-label">Seed<input aria-label="Scenario seed" value={seed} inputMode="numeric" onChange={(event) => setSeed(event.target.value)} /></label><button className="button" disabled={!ready} onClick={() => reset()}>Load scenario</button>
             </div>
             <div className="export-actions">
               <button className="button" disabled={!ready} onClick={() => changeScenario(refreshSyntheticProfiles(scenario), "Known destination profiles refreshed.")}><RefreshCw size={14} />Refresh profiles</button>
@@ -331,6 +395,16 @@ export default function DockDashboard() {
             {session.audit.length ? <div className="table-scroll"><table><thead><tr><th>Time</th><th>Action</th><th>Trailer</th><th>Door</th><th>Decision note</th></tr></thead><tbody>{[...session.audit].reverse().map((event, index) => <tr key={index}><td>{time(event.atMinute)}</td><td>{label(event.action)}</td><td>{event.trailerId}</td><td>{event.doorId}</td><td>{event.reason}</td></tr>)}</tbody></table></div> : <p>No assignments or completions recorded.</p>}
           </section>
         </div>}
+        </div>
+      </main>
+      {showProperties && selectedRow && <div className="property-rail"><TrailerSummary row={selectedRow} zones={scenario.zones} onInspect={openTrailer} /></div>}
+      {view === "overview" && <div className="canvas-toolbar" role="group" aria-label="Canvas controls">
+        <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= 80} onClick={() => setZoom(value => Math.max(80, value - 10))}><Minus size={15}/></button>
+        <button type="button" className="zoom-value" aria-label={`Zoom ${zoom} percent. Reset zoom`} title="Reset zoom" onClick={() => setZoom(100)}>{zoom}%</button>
+        <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 130} onClick={() => setZoom(value => Math.min(130, value + 10))}><Plus size={15}/></button>
+        {selectedRow && <button type="button" className="toggle-properties" title={propertiesVisible ? "Hide properties" : "Show properties"} aria-label="Show trailer properties" aria-pressed={propertiesVisible} onClick={() => setPropertiesVisible(value => !value)}><PanelRight size={16}/></button>}
+      </div>}
+    </div>
         <dialog className="trailer-drawer" ref={drawer} aria-label="Trailer decision" onClose={() => setDrawerOpen(false)}>
           {drawerOpen && <><div className="drawer-top"><strong>Trailer decision</strong><button type="button" className="button" autoFocus onClick={() => drawer.current?.close()}>Close</button></div>
             {inspector}
@@ -338,7 +412,5 @@ export default function DockDashboard() {
             <div className="drawer-links"><button className="button" onClick={() => leaveDrawer("doors")}>Open door plan</button><button className="button" onClick={() => leaveDrawer("floor")}>Review sort floor</button></div>
           </>}
         </dialog>
-      </div>
-    </main>
   </div>;
 }

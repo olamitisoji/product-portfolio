@@ -1,49 +1,49 @@
-.floor-board { display: grid; gap: 1rem; min-width: 0; color: #191e2c; }
+.floor-board { display: grid; gap: 1rem; min-width: 0; color: #203b39; }
 .floor-board .panel { min-width: 0; background: white; }
 .floor-board .floor-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem 1rem; padding: 1.1rem 1.25rem; }
 .floor-board .floor-header p, .floor-board .floor-record small, .floor-board .floor-disclosures p { color: #586171; font-size: .82rem; }
 .floor-board .floor-header p { margin-top: .25rem; }
 .floor-board .floor-window { padding: .32rem .6rem; color: #45516a; background: #f4f5fa; border-radius: .4rem; font-size: .8rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .floor-board .floor-summary, .floor-board .floor-record { display: grid; margin: 0; font-variant-numeric: tabular-nums; }
-.floor-board .floor-summary { grid-template-columns: repeat(3,minmax(0,1fr)); border-block: 1px solid #e0e3ea; }
-.floor-board .floor-record { grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid #e0e3ea; }
+.floor-board .floor-summary { grid-template-columns: repeat(3,minmax(0,1fr)); border-block: 1px solid #dfe3da; }
+.floor-board .floor-record { grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid #dfe3da; }
 .floor-board :is(.floor-summary,.floor-record) > div { min-width: 0; padding: .85rem 1.25rem; }
-.floor-board :is(.floor-summary,.floor-record) > div + div { border-inline-start: 1px solid #e0e3ea; }
+.floor-board :is(.floor-summary,.floor-record) > div + div { border-inline-start: 1px solid #dfe3da; }
 .floor-board .floor-summary span, .floor-board .floor-record dt { color: #535d6e; font-size: .8rem; }
 .floor-board .floor-summary strong, .floor-board .floor-record dd { display: block; margin: .2rem 0 0; font-size: clamp(1.18rem,2.4vw,1.7rem); font-weight: 650; letter-spacing: -.035em; }
 .floor-board .floor-record small { display: block; margin-top: .25rem; font-size: .72rem; line-height: 1.4; }
 .floor-board .floor-risk, .floor-board .floor-record-warn { background: #fff6e4; }
 .floor-board .floor-risk strong, .floor-board .floor-record-warn dd, .floor-board .floor-warn-text { color: #7d4d0e; }
-.floor-board .floor-clear { background: #f0f2ff; color: #303b94; }
+.floor-board .floor-clear { background: #eaf2e7; color: #2c5f53; }
 .floor-board .floor-table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; }
 .floor-board .floor-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.floor-board .floor-table :is(th,td) { padding: .61rem .72rem; text-align: right; font-size: .83rem; border-bottom: 1px solid #e0e3ea; }
-.floor-board .floor-table thead th { height: 2.7rem; color: #4b5567; background: #f6f7fa; font-size: .76rem; font-weight: 600; }
+.floor-board .floor-table :is(th,td) { padding: .61rem .72rem; text-align: right; font-size: .83rem; border-bottom: 1px solid #dfe3da; }
+.floor-board .floor-table thead th { height: 2.7rem; color: #50645d; background: #f5f5ef; font-size: .76rem; font-weight: 600; }
 .floor-board .floor-table th:first-child { text-align: left; padding-left: 1.25rem; }
 .floor-board .floor-table th[scope="row"] { font-weight: 600; }
 .floor-board .floor-table small { display: block; color: #85530f; font-size: .72rem; }
 .floor-board .floor-table tbody tr:last-child :is(th,td) { border-bottom: 0; }
-.floor-board .floor-transfer { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; padding: 1.1rem 1.25rem; border-top: 1px solid #e0e3ea; }
-.floor-board .floor-transfer label { display: grid; gap: .3rem; color: #4b5567; font-size: .8rem; }
+.floor-board .floor-transfer { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; padding: 1.1rem 1.25rem; border-top: 1px solid #dfe3da; }
+.floor-board .floor-transfer label { display: grid; gap: .3rem; color: #50645d; font-size: .8rem; }
 .floor-board .floor-transfer :is(select,button) { min-height: 2.5rem; padding: .35rem .65rem; border: 1px solid #c8cdd8; border-radius: .45rem; color: #242b3c; background: #fff; font-size: .83rem; }
 .floor-board .floor-transfer button { font-weight: 600; cursor: pointer; }
-.floor-board .floor-transfer .primary { border-color: #3644b1; background: #3644b1; color: white; }
-.floor-board .floor-transfer .primary:hover:not(:disabled) { background: #283584; }
+.floor-board .floor-transfer .primary { border-color: #214c49; background: #214c49; color: white; }
+.floor-board .floor-transfer .primary:hover:not(:disabled) { background: #315f59; }
 .floor-board .floor-transfer button:disabled { opacity: .55; cursor: default; }
 .floor-board .floor-action-status { padding: 0 1.25rem .75rem; font-size: .82rem; color: #805014; }
-.floor-board .floor-disclosures { padding-inline: 1.25rem; border-top: 1px solid #e0e3ea; }
+.floor-board .floor-disclosures { padding-inline: 1.25rem; border-top: 1px solid #dfe3da; }
 .floor-board .floor-disclosures details + details { border-top: 1px solid #e9ebf0; }
 .floor-board .floor-disclosures summary { padding-block: .68rem; color: #47526b; font-size: .82rem; font-weight: 550; cursor: pointer; }
 .floor-board .floor-disclosures p { max-width: 50rem; padding-bottom: .8rem; margin: 0; line-height: 1.5; }
 .floor-board .floor-exclusions { display: flex; flex-wrap: wrap; gap: .7rem 1.7rem; margin: 0; padding-bottom: .8rem; }
 .floor-board .floor-exclusions dt { color: #586171; font-size: .76rem; }
 .floor-board .floor-exclusions dd { margin: .15rem 0 0; font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.floor-board :is(button,select,summary,[tabindex]):focus-visible { outline: 2px solid #3444c2; outline-offset: 2px; }
+.floor-board :is(button,select,summary,[tabindex]):focus-visible { outline: 2px solid #296c61; outline-offset: 2px; }
 .floor-board .floor-table-wrap:focus-visible { outline-offset: -2px; }
 @media (max-width: 800px) {
   .floor-board .floor-record { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .floor-board .floor-record > div:nth-child(3) { border-inline-start: none; }
-  .floor-board .floor-record > div:nth-child(n+3) { border-top: 1px solid #e0e3ea; }
+  .floor-board .floor-record > div:nth-child(n+3) { border-top: 1px solid #dfe3da; }
 }
 @media (max-width: 640px) {
   .floor-board .floor-header, .floor-board .floor-transfer { padding: .85rem; }

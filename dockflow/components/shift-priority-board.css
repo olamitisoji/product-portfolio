@@ -1,7 +1,7 @@
 .pickup-board {
   min-width: 0;
   margin-block-end: 1rem;
-  color: #191e2c;
+  color: #203b39;
   background: #fff;
   font-variant-numeric: tabular-nums;
 }
@@ -17,7 +17,7 @@
 .pickup-board .pickup-empty,
 .pickup-board .pickup-scroll small { color: #586171; font-size: .82rem; }
 .pickup-board .pickup-heading p { margin-top: .25rem; }
-.pickup-board .pickup-heading label { display: grid; gap: .3rem; color: #4b5567; font-size: .8rem; }
+.pickup-board .pickup-heading label { display: grid; gap: .3rem; color: #50645d; font-size: .8rem; }
 .pickup-board .pickup-heading select {
   min-height: 2.5rem;
   border: 1px solid #c8cdd8;
@@ -30,10 +30,10 @@
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
   margin: 0;
-  border-block: 1px solid #e0e3ea;
+  border-block: 1px solid #dfe3da;
 }
 .pickup-board .pickup-summary > div { padding: .85rem 1.25rem; }
-.pickup-board .pickup-summary > div + div { border-inline-start: 1px solid #e0e3ea; }
+.pickup-board .pickup-summary > div + div { border-inline-start: 1px solid #dfe3da; }
 .pickup-board .pickup-summary dt { color: #535d6e; font-size: .8rem; }
 .pickup-board .pickup-summary dd { margin: .2rem 0 0; font-size: clamp(1.18rem,2.4vw,1.7rem); font-weight: 650; letter-spacing: -.035em; }
 .pickup-board .pickup-cutoff-alert { background: #fff6e4; }
@@ -50,20 +50,20 @@
   font-size: .82rem;
   cursor: pointer;
 }
-.pickup-board .pickup-filters button[aria-pressed="true"] { color: #303b94; border-color: #8997e1; background: #edf0ff; font-weight: 650; }
-.pickup-board .pickup-filters button:hover { border-color: #838db6; }
+.pickup-board .pickup-filters button[aria-pressed="true"] { color: #2c5f53; border-color: #92ac99; background: #e8eee4; font-weight: 650; }
+.pickup-board .pickup-filters button:hover { border-color: #81988d; }
 .pickup-board .pickup-filters span { font-size: .75rem; margin-inline-start: .2rem; }
 .pickup-board .pickup-scroll { overflow: auto; max-height: 27rem; }
 .pickup-board .pickup-scroll table { min-width: 41rem; width: 100%; border-collapse: collapse; }
 .pickup-board .pickup-scroll :is(th,td) { padding: .65rem 1.25rem; text-align: left; vertical-align: middle; font-size: .84rem; }
-.pickup-board .pickup-scroll thead th { position: sticky; z-index: 1; top: 0; color: #4b5567; background: #f6f7fa; font-size: .76rem; font-weight: 600; }
-.pickup-board .pickup-scroll tbody :is(th,td) { border-top: 1px solid #e0e3ea; }
+.pickup-board .pickup-scroll thead th { position: sticky; z-index: 1; top: 0; color: #50645d; background: #f5f5ef; font-size: .76rem; font-weight: 600; }
+.pickup-board .pickup-scroll tbody :is(th,td) { border-top: 1px solid #dfe3da; }
 .pickup-board .pickup-scroll th[scope="row"] { background: white; }
 .pickup-board .pickup-scroll small { display: block; margin-top: .12rem; font-size: .73rem; }
-.pickup-board .pickup-load { min-height: 2.25rem; padding: 0 .1rem; color: #3443a9; background: transparent; border: 0; font: inherit; font-weight: 650; cursor: pointer; }
+.pickup-board .pickup-load { min-height: 2.25rem; padding: 0 .1rem; color: #315e55; background: transparent; border: 0; font: inherit; font-weight: 650; cursor: pointer; }
 .pickup-board .pickup-load:hover { text-decoration: underline; text-underline-offset: .15rem; }
 .pickup-board .pickup-empty { padding: 1rem 1.25rem; margin: 0; }
-.pickup-board :is(button,select,[tabindex]):focus-visible { outline: 2px solid #3444c2; outline-offset: 2px; }
+.pickup-board :is(button,select,[tabindex]):focus-visible { outline: 2px solid #296c61; outline-offset: 2px; }
 .pickup-board .pickup-scroll:focus-visible { outline-offset: -2px; }
 @media (max-width: 640px) {
   .pickup-board .pickup-heading, .pickup-board .pickup-filters { padding: .8rem; }

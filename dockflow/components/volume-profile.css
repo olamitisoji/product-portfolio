@@ -1,0 +1,96 @@
+.volume-profile {
+  container: volume-profile / inline-size;
+  margin: 0 0 16px;
+  border: 1px solid #284d48;
+  border-radius: 8px;
+  background: #183c38;
+  color: #fffaf1;
+  overflow: hidden;
+}
+.volume-profile-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 11px 24px;
+  padding: 19px 23px 14px;
+}
+.volume-profile-inner.with-profile { grid-template-columns: minmax(0, 1fr) minmax(80px, 18%); }
+.volume-profile-metrics {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: 1.12fr 1fr 1fr;
+  margin: 0;
+  min-width: 0;
+}
+.volume-profile-metrics > div { min-width: 0; padding-inline: clamp(8px, 2cqi, 23px); border-left: 1px solid #3d5955; }
+.volume-profile-metrics > div:first-child { padding-left: 0; border: 0; }
+.volume-profile-metrics > div:last-child { padding-right: 0; }
+.volume-profile-metrics dt { color: #d2dfd9; font-size: 12px; line-height: 1.35; }
+.volume-profile-metrics dd {
+  margin: 4px 0 0;
+  color: #fbfaf1;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(27px, 3.7cqi, 35px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -.045em;
+  font-variant-numeric: lining-nums tabular-nums;
+  overflow-wrap: anywhere;
+}
+.volume-profile-metrics > div:first-child dd { font-size: clamp(31px, 4.3cqi, 40px); }
+.volume-profile-calendar {
+  grid-area: 2 / 1;
+  margin: 0;
+  color: #bfd0c8;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.volume-profile-calendar span { color: #82a29a; margin-inline: 2px; }
+.volume-progress {
+  grid-area: 1 / 2 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding-inline-start: clamp(10px, 2cqi, 20px);
+  border-inline-start: 1px solid #3d5955;
+}
+.volume-progress-plot {
+  display: flex;
+  align-items: flex-end;
+  height: 46px;
+  border-bottom: 1px solid #719c90;
+  background: repeating-linear-gradient(to top, transparent 0 14px, #ffffff0f 14px 15px);
+}
+.volume-progress-plot i {
+  flex: none;
+  display: block;
+  background: repeating-linear-gradient(to right, #85c1ac 0 2px, transparent 2px 4px);
+}
+.volume-progress figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 3px;
+  color: #c1d8cd;
+  font-size: 10px;
+  line-height: 1.35;
+}
+@container volume-profile (max-width: 620px) {
+  .volume-profile-inner { padding: 15px; gap: 10px 13px; }
+  .volume-profile-inner.with-profile { grid-template-columns: minmax(0, 1fr) 80px; }
+  .volume-profile-metrics { grid-column: 1 / -1; }
+  .volume-profile-calendar { align-self: end; }
+  .volume-progress { grid-area: 2 / 2; gap: 3px; padding-left: 8px; }
+  .volume-progress-plot { height: 22px; }
+  .volume-progress figcaption { font-size: 9px; }
+}
+@container volume-profile (max-width: 410px) {
+  .volume-profile-inner { padding: 12px 10px; column-gap: 8px; }
+  .volume-profile-metrics dt { font-size: 11px; }
+  .volume-profile-metrics dd { font-size: 23px; }
+  .volume-profile-metrics > div:first-child dd { font-size: 26px; }
+  .volume-profile-metrics > div { padding-inline: 7px; }
+  .volume-profile-calendar { font-size: 10px; }
+}

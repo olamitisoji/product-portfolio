@@ -1,4 +1,5 @@
-import type { Handling, Preset, Scenario, Trailer, ZoneId } from './dock-types.ts';
+import { DEFAULT_VOLUME_PLAN, getVolumeTargets } from './volume-plan.ts';
+import type { Handling, Preset, Scenario, ShiftReport, Trailer, ZoneId } from './dock-types.ts';
 
 // Every name, location, count and policy in these presets is fictional.
 export function createScenario(preset: Preset = 'balanced', seed: number = 42): Scenario {
@@ -31,19 +32,20 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
       hold: false, currentDoorId: null, plannedDoorId: null, ...overrides,
     };
   };
+  // These manifests cover the active dock board at one point in the shift.
   const trailers = [
-    load('TR-101', 'Juniper Freight', 160, 'A', 'palletized', 0, { status: 'at_door', currentDoorId: 'A-01', hold: true, nextUnits: 0, arrivalMinute: 360 }),
-    load('TR-102', 'Morrow Logistics', 220, 'B', 'cart', 0, { status: 'at_door', currentDoorId: 'B-01', arrivalMinute: 410 }),
-    load('TR-103', 'Copperline Cargo', 360, 'A', 'palletized', 0.8, { plannedDoorId: 'A-01' }),
-    load('TR-104', 'Cedar Road Transport', 290, 'B', 'cart', 0.75, { plannedDoorId: 'B-02' }),
-    load('TR-105', 'Northstar Parcel Co.', 180, 'C', 'loose', 0, { plannedDoorId: 'C-01' }),
-    load('TR-106', 'Bluebird Transfer', 240, 'B', 'crossdock', 0.65, { plannedDoorId: 'X-01' }),
-    load('TR-107', 'Willow Route', 125, 'A', 'cart', 0.35, { profileKnown: false, profileUpdatedMinute: null, zoneUnits: { A: 0, B: 0, C: 0 } }),
-    load('TR-108', 'Silverfern Freight', 210, 'C', 'palletized', 0.55, { profileUpdatedMinute: 505, plannedDoorId: 'C-02' }),
-    load('TR-109', 'Orchard Transit', 280, 'B', 'palletized', 0.7, { status: 'expected', arrivalMinute: 625 + Math.floor(random() * 16) }),
-    load('TR-110', 'Ember Lane', 90, 'A', 'loose', 0, { hold: true, plannedDoorId: 'A-02' }),
-    load('TR-111', 'Linden Distribution', 200, 'A', 'palletized', surge ? 0.7 : 0),
-    load('TR-112', 'Saffron Haulage', 150, 'C', 'loose', 0, { status: 'complete', nextUnits: 0, arrivalMinute: 300 }),
+    load('TR-101', 'Juniper Freight', 400, 'A', 'palletized', 0, { status: 'at_door', currentDoorId: 'A-01', hold: true, nextUnits: 0, arrivalMinute: 360 }),
+    load('TR-102', 'Morrow Logistics', 550, 'B', 'cart', 0, { status: 'at_door', currentDoorId: 'B-01', arrivalMinute: 410 }),
+    load('TR-103', 'Copperline Cargo', 900, 'A', 'palletized', 0.8, { plannedDoorId: 'A-01' }),
+    load('TR-104', 'Cedar Road Transport', 725, 'B', 'cart', 0.75, { plannedDoorId: 'B-02' }),
+    load('TR-105', 'Northstar Parcel Co.', 450, 'C', 'loose', 0, { plannedDoorId: 'C-01' }),
+    load('TR-106', 'Bluebird Transfer', 600, 'B', 'crossdock', 0.65, { plannedDoorId: 'X-01' }),
+    load('TR-107', 'Willow Route', 312, 'A', 'cart', 0.35, { profileKnown: false, profileUpdatedMinute: null, zoneUnits: { A: 0, B: 0, C: 0 } }),
+    load('TR-108', 'Silverfern Freight', 525, 'C', 'palletized', 0.55, { profileUpdatedMinute: 505, plannedDoorId: 'C-02' }),
+    load('TR-109', 'Orchard Transit', 700, 'B', 'palletized', 0.7, { status: 'expected', arrivalMinute: 625 + Math.floor(random() * 16) }),
+    load('TR-110', 'Ember Lane', 225, 'A', 'loose', 0, { hold: true, plannedDoorId: 'A-02' }),
+    load('TR-111', 'Linden Distribution', 500, 'A', 'palletized', surge ? 0.7 : 0),
+    load('TR-112', 'Saffron Haulage', 375, 'C', 'loose', 0, { status: 'complete', nextUnits: 0, arrivalMinute: 300 }),
   ];
   // A tied A/B profile demonstrates pressure-based ranking without a fabricated winner.
   const tied = trailers[10];
@@ -68,13 +70,38 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
     trailers[4].hold = true;
     trailers[10].plannedDoorId = 'C-01'; // Advisory plan has the wrong destination.
   }
+  const volumePlan = { ...DEFAULT_VOLUME_PLAN };
+  const { hourlyPackages } = getVolumeTargets(volumePlan);
+  const shiftReports: ShiftReport[] = [];
+  let processedPackages = 0;
+  let attempted = 0;
+  let sorted = 0;
+  // Generate interval counts once. The shift clock reveals them as observations without
+  // recomputing them from the current queue, a door assignment or a proposed floor layout.
+  for (let elapsed = 0; elapsed <= volumePlan.shiftHours * 60; elapsed += 30) {
+    if (elapsed > 0) {
+      const pace = disruption ? 0.78 : surge ? 1.12 : 1.01;
+      const intervalProcessed = Math.round(hourlyPackages / 2 * pace * (0.92 + 0.16 * random()));
+      const intervalAttempts = intervalProcessed + Math.round(intervalProcessed * (0.015 + 0.02 * random()));
+      const firstPassRate = (disruption ? 0.74 : 0.87) + 0.03 * random();
+      processedPackages += intervalProcessed;
+      attempted += intervalAttempts;
+      sorted += Math.round(intervalAttempts * firstPassRate);
+    }
+    shiftReports.push({
+      atMinute: volumePlan.shiftStartMinute + elapsed,
+      plannedPackages: Math.round(hourlyPackages * elapsed / 60),
+      processedPackages,
+      firstPass: { attempted, sorted },
+    });
+  }
   return {
-    version: 1, synthetic: true, seed,
+    version: 1, synthetic: true, seed, volumePlan, shiftReports,
     name: 'Northbank Inbound · Fictional Hub', nowMinute: 600, currentDeadlineMinute: 720, nextDeadlineMinute: 960,
     zones: [
-      { id: 'A', name: 'North loop', capacityUnits: surge ? 700 : 900 },
-      { id: 'B', name: 'Central loop', capacityUnits: surge ? 760 : 1000 },
-      { id: 'C', name: 'South loop', capacityUnits: surge ? 600 : 800 },
+      { id: 'A', name: 'North loop', capacityUnits: surge ? 1750 : 2250 },
+      { id: 'B', name: 'Central loop', capacityUnits: surge ? 1900 : 2500 },
+      { id: 'C', name: 'South loop', capacityUnits: surge ? 1500 : 2000 },
     ],
     doors: [
       { id: 'A-01', zoneId: 'A', allowedHandling: ['palletized', 'cart'], enabled: true },
@@ -86,15 +113,5 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
       { id: 'X-01', zoneId: null, allowedHandling: ['crossdock'], enabled: true },
     ],
     trailers,
-    // Cumulative readings from an independent fictional shift log. A what-if never rewrites history.
-    shiftReports: [570, 600, 630, 660].map((atMinute, i) => {
-      const plannedPackages = (i + 1) * (surge ? 980 : 650);
-      const processedPackages = Math.round(plannedPackages * (disruption ? 0.78 : surge ? 0.87 : 1.035));
-      const attempted = processedPackages + 40 * (i + 1);
-      return {
-        atMinute, plannedPackages, processedPackages,
-        firstPass: { attempted, sorted: Math.round(attempted * (disruption ? 0.72 : 0.86)) },
-      };
-    }),
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { ChevronDown, Table2 } from "lucide-react";
 import type { LoadDoorRow } from "@/lib/dock-engine";
 import type { PackageSize, Scenario, TrailerStatus } from "@/lib/dock-types";
 import "./load-door-board.css";
@@ -43,16 +44,22 @@ export function LoadDoorBoard({ scenario, rows, selectedId, onInspect }: {
 
   return <section className="panel load-door-board" aria-labelledby="load-board-heading">
     <header className="load-board-header">
-      <h2 id="load-board-heading">Inbound trailers <span className="count">{rows.filter(row => location === "all" || row.trailer.status === location).length}</span></h2>
+      <h2 id="load-board-heading"><Table2 size={17} aria-hidden="true" />Inbound trailers <span className="count">{rows.filter(row => location === "all" || row.trailer.status === location).length}</span></h2>
       <div className="load-board-controls">
-        <select aria-label="Location" value={location} onChange={event => setLocation(event.target.value as typeof location)}>
-          <option value="all">All locations</option>
-          {locationGroups.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
-        </select>
-        <select aria-label="Destination counts by package size" value={size} onChange={event => setSize(event.target.value as typeof size)}>
-          <option value="all">All package sizes</option>
-          {sizeOptions.map(key => <option key={key} value={key}>{key.charAt(0).toUpperCase() + key.slice(1)} packages</option>)}
-        </select>
+        <label className="load-board-filter">
+          <select aria-label="Location" value={location} onChange={event => setLocation(event.target.value as typeof location)}>
+            <option value="all">All locations</option>
+            {locationGroups.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
+          </select>
+          <ChevronDown size={13} aria-hidden="true" />
+        </label>
+        <label className="load-board-filter">
+          <select aria-label="Destination counts by package size" value={size} onChange={event => setSize(event.target.value as typeof size)}>
+            <option value="all">All package sizes</option>
+            {sizeOptions.map(key => <option key={key} value={key}>{key.charAt(0).toUpperCase() + key.slice(1)} packages</option>)}
+          </select>
+          <ChevronDown size={13} aria-hidden="true" />
+        </label>
       </div>
     </header>
     {size !== "all" && !rows.some(row => row.trailer.packageMix) && <p className="load-board-missing">
@@ -62,7 +69,9 @@ export function LoadDoorBoard({ scenario, rows, selectedId, onInspect }: {
       <table>
         <thead><tr>
           <th scope="col">Trailer</th><th scope="col">Due by pickup<small>{clock(scenario.currentDeadlineMinute)} · {clock(scenario.nextDeadlineMinute)}</small></th>
-          {scenario.zones.map(zone => <th key={zone.id} className="zone-column" scope="col">{zone.name}</th>)}
+          {scenario.zones.map(zone => <th key={zone.id} className="zone-column" data-zone={zone.id} scope="col">
+            <span><i aria-hidden="true" />{zone.name}</span>
+          </th>)}
           <th scope="col">Preassigned</th><th scope="col">Door review</th>
         </tr></thead>
         {groups.map(([key, name]) => {
@@ -75,7 +84,8 @@ export function LoadDoorBoard({ scenario, rows, selectedId, onInspect }: {
                 ? trailer.profileKnown ? trailer.zoneUnits[zone.id] : null
                 : trailer.packageMix?.[zone.id][size] ?? null);
               const rowTotal = cells.reduce<number>((sum, units) => sum + (units ?? 0), 0);
-              return <tr key={trailer.id} className={trailer.id === selectedId ? "load-board-selected" : undefined}>
+              return <tr key={trailer.id} className={trailer.id === selectedId ? "load-board-selected" : undefined}
+                onClick={event => { if (!(event.target as Element).closest("button")) onInspect(trailer.id); }}>
                 <th scope="row"><button type="button" className="load-board-inspect" aria-current={trailer.id === selectedId ? true : undefined} onClick={() => onInspect(trailer.id)}>{trailer.id}</button>
                   <small>{trailer.handling}{trailer.hold && " · On hold"}</small>
                 </th>
@@ -83,8 +93,9 @@ export function LoadDoorBoard({ scenario, rows, selectedId, onInspect }: {
                 {cells.map((units, i) => {
                   const share = rowTotal && units !== null ? units / rowTotal : 0;
                   const label = units === null ? "No manifest detail" : `${number.format(units)} packages · ${Math.round(share * 100)}%`;
-                  return <td key={scenario.zones[i].id} className="load-board-count" title={label}>
-                    <span className={units === null ? "heat-unknown" : "heat-value"} style={units === null ? undefined : { backgroundColor: `rgba(62, 91, 209, ${0.035 + share * 0.48})` }}>{units === null ? "—" : number.format(units)}</span>
+                  const cellStyle = units === null ? undefined : { "--heat-strength": `${4 + share * 70}%` } as CSSProperties;
+                  return <td key={scenario.zones[i].id} className="load-board-count" data-zone={scenario.zones[i].id} title={label}>
+                    <span className={units === null ? "heat-unknown" : "heat-value"} style={cellStyle}>{units === null ? "—" : number.format(units)}</span>
                   </td>;
                 })}
                 <td>{trailer.plannedDoorId ?? "—"}{preassignmentDiffers && <small className="load-board-discrepancy">Different door</small>}</td>
@@ -100,6 +111,6 @@ export function LoadDoorBoard({ scenario, rows, selectedId, onInspect }: {
         })}
       </table>
     </div>
-    <div className="load-board-key"><span>Destination share per trailer</span><span>0%</span><i aria-hidden="true" /><span>100%</span><span className="detail-key">— No manifest detail</span></div>
+    <div className="load-board-key"><span>Destination share</span><span>0%</span><i className="share-legend" aria-hidden="true" /><span>100%</span><span className="detail-key"><i aria-hidden="true" /> No manifest detail</span></div>
   </section>;
 }

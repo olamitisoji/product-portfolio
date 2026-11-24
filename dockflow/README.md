@@ -4,9 +4,13 @@
 
 A shift lead has several decisions to make before a trailer unloads. Where do its packages need to go? How much is due in the next pickup? Can the suggested door take this freight? Where will the team need more people? Sortward connects these decisions in an independent simulator built with fictional manifests, door rules and staffing assumptions.
 
+## Facility volume
+
+The fictional facility plans for about 600,000 packages per week. A seven-day schedule with two 12-hour shifts a day gives an average target of 42,857 packages per shift, or 3,571 per hour. The heatmap covers the trailers currently under review. Each pickup total counts packages due from those trailers. A timestamped shift report tracks cumulative facility progress separately.
+
 ## Try a shift
 
-1. Open the destination heatmap. Read across one trailer to see its deadline volumes, package counts by destination, preassigned door and suggested placement. Filter by location or package size to see a different slice of the same manifest.
+1. Open the destination heatmap. Select a trailer in the matrix or left sidebar to see its properties. Open **Review trailer** for the assignment decision. On a phone, selecting the trailer opens its review directly. Read across one trailer to see its deadline volumes, package counts by destination, preassigned door and suggested placement. Filter by location or package size to see a different slice of the same manifest.
 2. Switch pickup windows to see due packages broken out by trailers on a door, in the yard and still expected. Advance the simulated clock to see arrival and priority changes.
 3. Inspect a trailer whose proposed door differs from the preassignment. A waiting trailer can receive an open, compatible door. An expected load or a trailer waiting for a compatible door to clear can have a planning target for later review.
 4. Accept a simulated assignment. Its door becomes occupied and the heatmap updates. Mark the trailer unloaded to release the door, or use Undo to return to the previous state.

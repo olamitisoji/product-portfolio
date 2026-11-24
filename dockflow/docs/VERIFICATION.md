@@ -4,7 +4,7 @@ Updated November 23, 2026. The simulator uses fictional trailers, manifests, shi
 
 ## Automated checks
 
-Run `npm test` and `npm run typecheck` from the app directory. The November 23 run passed all 48 tests and the TypeScript check.
+Run `npm test` and `npm run typecheck` from the app directory. The November 23 run passed all 54 tests, the TypeScript check and lint.
 
 | Decision | Cases covered |
 | --- | --- |
@@ -18,9 +18,9 @@ The analyst endpoint tests use a mocked provider and the actual quota migration 
 
 ## Reproduce a decision
 
-In the standard shift with seed 42, inspect TR-103. Its preassigned door A-01 is occupied. The simulator offers A-02. Accept it and check physical occupancy, then use Undo. Change the pickup window and compare the work due. On the sort floor, move one chute from North to Central. The simulated total shortfall falls from 217 to 127 packages and crew becomes the limiting resource in Central.
+In the standard shift with seed 42, inspect TR-103. Its preassigned door A-01 is occupied. The simulator offers A-02. Accept it and check physical occupancy, then use Undo. Change the pickup window and compare the work due. On the sort floor, move one chute from North to Central. For the weekly plan of 600,000 packages, the simulated total shortfall falls from 276 to 216 packages and crew becomes the limiting resource in Central.
 
-These interactions were checked in the browser. The trailer detail view was also checked at phone width, where the manifest scrolls inside its panel.
+The desktop check covered selecting from the matrix, opening the properties panel, zoom, and reviewing a door. The mobile check covered the 600,000-package example, Undo to restore an earlier snapshot, section navigation, and a chute transfer. The trailer detail view was also checked at phone width, where the manifest scrolls inside its panel.
 
 ## Scope of the evidence
 

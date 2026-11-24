@@ -2,32 +2,44 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { advanceClock, parseScenario } from '../lib/dock-engine.ts';
 import { createScenario } from '../lib/dock-fixtures.ts';
-import { BASE_FLOOR_PLAN, currentShiftRecord, evaluateSortFloor, moveFloorResource } from '../lib/sort-floor.ts';
+import { BASE_FLOOR_PLAN, getBaselineFloorPlan, currentShiftRecord, evaluateSortFloor, moveFloorResource } from '../lib/sort-floor.ts';
 
 test('resource transfers expose the next constraint and protect the shared resource pool', () => {
   const scenario = createScenario('balanced', 42);
   const original = evaluateSortFloor(scenario);
-  const layout = moveFloorResource(BASE_FLOOR_PLAN, 'chutes', 'A', 'B');
+  const baseline = getBaselineFloorPlan(scenario);
+  const layout = moveFloorResource(baseline, 'chutes', 'A', 'B');
   const revised = evaluateSortFloor(scenario, layout);
   const beforeB = original.zones.find(z => z.zone === 'B');
   const afterB = revised.zones.find(z => z.zone === 'B');
   assert.equal(beforeB.proposed.limitingResource, 'Chutes');
-  assert.equal(beforeB.proposed.units, 540);
-  assert.equal(afterB.proposed.units, 630);
+  assert.equal(beforeB.proposed.units, 1620);
+  assert.equal(afterB.proposed.units, 1680);
   assert.equal(afterB.proposed.limitingResource, 'Crew');
   assert.equal(revised.baseGap, original.gap);
   assert.ok(revised.gap < original.gap);
   const labor = moveFloorResource(layout, 'crew', 'C', 'B');
-  assert.equal(evaluateSortFloor(scenario, labor).zones.find(z => z.zone === 'B').proposed.units, 720);
-  assert.equal(layout.crew.C, BASE_FLOOR_PLAN.crew.C);
-  assert.equal(BASE_FLOOR_PLAN.chutes.A, 4);
+  assert.equal(evaluateSortFloor(scenario, labor).zones.find(z => z.zone === 'B').proposed.units, 1800);
+  assert.equal(layout.crew.C, baseline.crew.C);
+  assert.equal(baseline.chutes.A, 9);
 
-  let transferred = BASE_FLOOR_PLAN;
-  for (let n = 0; n < 6; n++) transferred = moveFloorResource(transferred, 'crew', 'A', 'B');
+  let transferred = baseline;
+  for (let n = 0; n <= baseline.crew.A; n++) transferred = moveFloorResource(transferred, 'crew', 'A', 'B');
   assert.equal(transferred.crew.A, 0);
-  assert.equal(Object.values(transferred.crew).reduce((total, n) => total + n, 0), 9);
+  assert.equal(Object.values(transferred.crew).reduce((total, n) => total + n, 0), 22);
   assert.strictEqual(moveFloorResource(transferred, 'crew', 'A', 'C'), transferred);
   assert.strictEqual(moveFloorResource(transferred, 'chutes', 'B', 'B'), transferred);
+});
+
+test('full facility fixtures and legacy imports use independent resource pools at identical individual rates', () => {
+  const facility = createScenario('balanced', 42);
+  const legacy = { ...facility };
+  delete legacy.volumePlan;
+  assert.strictEqual(getBaselineFloorPlan(legacy), BASE_FLOOR_PLAN);
+  assert.strictEqual(getBaselineFloorPlan(advanceClock(facility)), getBaselineFloorPlan(facility));
+  assert.equal(evaluateSortFloor(legacy).zones.find(z => z.zone === 'B').proposed.units, 540);
+  assert.equal(evaluateSortFloor(facility).zones.reduce((sum, z) => sum + z.baseline.units, 0), 4350);
+  assert.equal(evaluateSortFloor(facility).gap, 276);
 });
 
 test('forecast reconciles actual location, arrival horizon, exclusions and missing size evidence', () => {
@@ -65,7 +77,7 @@ test('remaining minutes limit hourly capacity at the end of the fictional day', 
   const floor = evaluateSortFloor(scenario);
   assert.equal(floor.minutes, 15);
   assert.equal(floor.endMinute, 1440);
-  assert.equal(floor.zones.find(z => z.zone === 'B').proposed.units, 135);
+  assert.equal(floor.zones.find(z => z.zone === 'B').proposed.units, 405);
   assert.equal(floor.gap, 0);
 });
 
@@ -75,11 +87,11 @@ test('the clock reveals a recorded shift observation, independent of a chute or 
   assert.equal(current.report.atMinute, 600);
   assert.equal(current.variance, current.report.processedPackages - current.report.plannedPackages);
   assert.equal(current.yieldPercent, 100 * current.report.firstPass.sorted / current.report.firstPass.attempted);
-  evaluateSortFloor(scenario, moveFloorResource(BASE_FLOOR_PLAN, 'crew', 'A', 'B'));
+  evaluateSortFloor(scenario, moveFloorResource(getBaselineFloorPlan(scenario), 'crew', 'A', 'B'));
   assert.deepEqual(currentShiftRecord(scenario), current);
   const later = currentShiftRecord(advanceClock(scenario, 40));
   assert.equal(later.report.atMinute, 630);
-  assert.equal(currentShiftRecord({ ...scenario, nowMinute: 550 }), null);
+  assert.equal(currentShiftRecord({ ...scenario, nowMinute: scenario.volumePlan.shiftStartMinute - 1 }), null);
 });
 
 test('missing evidence and zero first attempts never become a zero-percent yield', () => {

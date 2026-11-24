@@ -2,7 +2,8 @@ import { buildLoadDoorBoard, evaluate } from './dock-engine.ts';
 import { createScenario } from './dock-fixtures.ts';
 import type { PlanMode, Scenario, Trailer, ZoneId } from './dock-types.ts';
 import { planPickupWindow, type PickupWindow } from './shift-priorities.ts';
-import { BASE_FLOOR_PLAN, currentShiftRecord, evaluateSortFloor, moveFloorResource, type FloorPlan } from './sort-floor.ts';
+import { getVolumeTargets } from './volume-plan.ts';
+import { getBaselineFloorPlan, currentShiftRecord, evaluateSortFloor, moveFloorResource, type FloorPlan } from './sort-floor.ts';
 
 export interface ShiftEvidence {
   id: string;
@@ -39,7 +40,7 @@ function safeReferences(scenario: Scenario) {
 // Callers validate the scenario, selected plan and pickup before this projection.
 // The scenario schema limits this to 100 trailer, 30 door, and three zone records.
 export function buildShiftEvidence(
-  scenario: Scenario, mode: PlanMode, floorPlan: FloorPlan = BASE_FLOOR_PLAN, pickup: PickupWindow = 'current',
+  scenario: Scenario, mode: PlanMode, floorPlan: FloorPlan = getBaselineFloorPlan(scenario), pickup: PickupWindow = 'current',
 ): ShiftEvidence[] {
   const refs = safeReferences(scenario);
   const evaluation = evaluate(scenario, mode);
@@ -49,7 +50,16 @@ export function buildShiftEvidence(
   const add = (id: string, label: string, text: string, trailerId?: string) => {
     evidence.push({ id, label, text, ...(trailerId && fixtureTrailers.has(trailerId) ? { trailerId } : {}) });
   };
-  add('shift', 'Shift overview', `Synthetic shift at ${clock(scenario.nowMinute)}. Selected pickup: ${pickup}. Door plan order: ${mode === 'priority' ? 'deadline priority' : 'arrival order'}. ${evaluation.metrics.activeTrailers} active trailers, ${evaluation.metrics.totalPackages} active packages. ${evaluation.metrics.availableDoors} enabled empty doors, ${primary.size} yard assignments proposed. Acceptance is an operator action.`);
+  add('shift', 'Shift overview', `Synthetic shift at ${clock(scenario.nowMinute)}. Selected pickup: ${pickup}. Door plan order: ${mode === 'priority' ? 'deadline priority' : 'arrival order'}. ${evaluation.metrics.activeTrailers} visible active trailers with ${evaluation.metrics.totalPackages} packages in their manifests. ${evaluation.metrics.availableDoors} enabled empty doors, ${primary.size} yard assignments proposed. Acceptance is an operator action.`);
+
+  if (scenario.volumePlan) {
+    const plan = scenario.volumePlan;
+    const targets = getVolumeTargets(plan);
+    add('volume-plan', 'Facility volume plan',
+      `Facility planning volume: approximately ${plan.weeklyPackages} packages per week. Scenario assumes ${plan.operatingDaysPerWeek} operating days per week, ${plan.shiftsPerDay} shifts per day and ${plan.shiftHours} hours per shift. On average that is about ${Math.round(targets.dailyPackages)} per day, ${Math.round(targets.shiftPackages)} per shift and ${Math.round(targets.hourlyPackages)} per hour. These are full-facility planning targets. The visible trailer manifests form one inbound snapshot; the one-hour forecast covers only eligible freight in that snapshot. Recorded throughput comes from timestamped shift observations.`);
+  } else {
+    add('volume-plan', 'Facility volume plan', 'This snapshot contains no facility volume target. Weekly and full-shift volumes cannot be established from the currently visible trailer manifests.');
+  }
 
   for (const window of ['current', 'next'] as const) {
     const plan = planPickupWindow(scenario, window);

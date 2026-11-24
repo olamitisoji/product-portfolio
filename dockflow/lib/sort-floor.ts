@@ -9,6 +9,16 @@ export const BASE_FLOOR_PLAN: FloorPlan = {
   chutes: { A: 4, B: 3, C: 3 },
   crew: { A: 3, B: 3, C: 3 },
 };
+// A larger fictional floor supports the 600,000-package weekly facility plan.
+const FACILITY_FLOOR_PLAN: FloorPlan = {
+  chutes: { A: 9, B: 9, C: 7 },
+  crew: { A: 7, B: 8, C: 7 },
+};
+
+export function getBaselineFloorPlan(scenario: Scenario): FloorPlan {
+  return scenario.volumePlan ? FACILITY_FLOOR_PLAN : BASE_FLOOR_PLAN;
+}
+
 export const CHUTE_RATE = 180;
 export const CREW_RATE = 210;
 const freshForMinutes = 60;
@@ -42,7 +52,8 @@ export function currentShiftRecord(scenario: Scenario) {
   };
 }
 
-export function evaluateSortFloor(scenario: Scenario, plan: FloorPlan = BASE_FLOOR_PLAN) {
+export function evaluateSortFloor(scenario: Scenario, plan: FloorPlan = getBaselineFloorPlan(scenario)) {
+  const baselinePlan = getBaselineFloorPlan(scenario);
   const endMinute = Math.min(1440, scenario.nowMinute + 60);
   const minutes = endMinute - scenario.nowMinute;
   const excluded = { held: 0, transfer: 0, unmapped: 0, stale: 0 };
@@ -76,7 +87,7 @@ export function evaluateSortFloor(scenario: Scenario, plan: FloorPlan = BASE_FLO
   }
   const zones = demand.map(row => {
     const packages = row.onSite + row.expected;
-    const baseline = floorCapacity(BASE_FLOOR_PLAN, row.zone, minutes);
+    const baseline = floorCapacity(baselinePlan, row.zone, minutes);
     const proposed = floorCapacity(plan, row.zone, minutes);
     return {
       ...row, packages, baseline, proposed,

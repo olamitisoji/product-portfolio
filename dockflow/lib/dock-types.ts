@@ -26,6 +26,14 @@ export interface Trailer {
   currentDoorId: string | null;
   plannedDoorId: string | null;
 }
+export interface VolumePlan {
+  weeklyPackages: number;
+  operatingDaysPerWeek: number;
+  shiftsPerDay: number;
+  shiftHours: number;
+  shiftStartMinute: number;
+}
+
 export interface ShiftReport {
   atMinute: number;
   plannedPackages: number;
@@ -44,6 +52,7 @@ export interface Scenario {
   zones: Zone[];
   doors: Door[];
   trailers: Trailer[];
+  volumePlan?: VolumePlan;
   shiftReports?: ShiftReport[];
 }
 export interface PriorityDetail { level: Priority; reason: string; overdue: boolean }

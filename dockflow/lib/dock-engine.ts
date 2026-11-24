@@ -1,6 +1,6 @@
 import type {
   ActionResult, Door, DoorCandidate, Evaluation, Handling, PackageMix, ParseResult, PlanMode,
-  PriorityDetail, Recommendation, Scenario, ShiftReport, Trailer, TrailerStatus, Warning, Zone, ZoneId,
+  PriorityDetail, Recommendation, Scenario, ShiftReport, Trailer, TrailerStatus, VolumePlan, Warning, Zone, ZoneId,
 } from './dock-types.ts';
 
 const ZONES: ZoneId[] = ['A', 'B', 'C'];
@@ -15,6 +15,7 @@ const time = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, 
 function cloneScenario(scenario: Scenario): Scenario {
   return {
     ...scenario,
+    ...(scenario.volumePlan && { volumePlan: { ...scenario.volumePlan } }),
     ...(scenario.shiftReports && { shiftReports: structuredClone(scenario.shiftReports) }),
     zones: scenario.zones.map((zone) => ({ ...zone })),
     doors: scenario.doors.map((door) => ({ ...door, allowedHandling: [...door.allowedHandling] })),
@@ -452,6 +453,18 @@ export function parseScenario(input: unknown): ParseResult {
     const currentDeadlineMinute = integer(own(source, 'currentDeadlineMinute'), 'Current deadline', 1440);
     const nextDeadlineMinute = integer(own(source, 'nextDeadlineMinute'), 'Next deadline', 1440);
     if (nextDeadlineMinute <= currentDeadlineMinute) errors.push('The next deadline must be later than the current deadline.');
+    let volumePlan: VolumePlan | undefined;
+    if (hasOwn(source, 'volumePlan')) {
+      const plan = record(own(source, 'volumePlan'), 'Facility volume plan');
+      volumePlan = {
+        weeklyPackages: integer(own(plan, 'weeklyPackages'), 'Weekly package target', 100_000_000, 1),
+        operatingDaysPerWeek: integer(own(plan, 'operatingDaysPerWeek'), 'Operating days per week', 7, 1),
+        shiftsPerDay: integer(own(plan, 'shiftsPerDay'), 'Shifts per day', 24, 1),
+        shiftHours: integer(own(plan, 'shiftHours'), 'Hours per shift', 24, 1),
+        shiftStartMinute: integer(own(plan, 'shiftStartMinute'), 'Shift start minute', 1439),
+      };
+      if (volumePlan.shiftsPerDay * volumePlan.shiftHours > 24) errors.push('Shift hours exceed the operating hours in a day.');
+    }
     const zones: Zone[] = list(own(source, 'zones'), 'Zones', 3).map((value, index) => {
       const zone = record(value, `Zone ${index + 1}`);
       return {
@@ -566,7 +579,7 @@ export function parseScenario(input: unknown): ParseResult {
       if (!hasOwn(source, field)) errors.push(`Missing scenario field: ${field}.`);
     }
     return errors.length ? { ok: false, errors } : {
-      ok: true, scenario: { version: 1, synthetic: true, seed, name, nowMinute, currentDeadlineMinute, nextDeadlineMinute, zones, doors, trailers, ...(shiftReports && { shiftReports }) },
+      ok: true, scenario: { version: 1, synthetic: true, seed, name, nowMinute, currentDeadlineMinute, nextDeadlineMinute, zones, doors, trailers, ...(volumePlan && { volumePlan }), ...(shiftReports && { shiftReports }) },
     };
   } catch {
     return { ok: false, errors: ['Scenario could not be safely read. Import a plain synthetic JSON object.'] };

@@ -2,8 +2,9 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { Scenario, ZoneId } from "../lib/dock-types";
+import { getVolumeTargets } from "../lib/volume-plan";
 import {
-  BASE_FLOOR_PLAN, CHUTE_RATE, CREW_RATE, currentShiftRecord, evaluateSortFloor, moveFloorResource,
+  getBaselineFloorPlan, CHUTE_RATE, CREW_RATE, currentShiftRecord, evaluateSortFloor, moveFloorResource,
 } from "../lib/sort-floor";
 import type { FloorResource, FloorPlan } from "../lib/sort-floor";
 import "./sort-floor.css";
@@ -15,10 +16,12 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
   const [resource, setResource] = useState<FloorResource>("chutes");
   const [from, setFrom] = useState<ZoneId>("A");
   const [to, setTo] = useState<ZoneId>("B");
+  const baseline = getBaselineFloorPlan(scenario);
   const floor = evaluateSortFloor(scenario, plan);
   const record = currentShiftRecord(scenario);
+  const targets = scenario.volumePlan && getVolumeTargets(scenario.volumePlan);
   const changed = scenario.zones.some(({ id }) =>
-    plan.chutes[id] !== BASE_FLOOR_PLAN.chutes[id] || plan.crew[id] !== BASE_FLOOR_PLAN.crew[id]);
+    plan.chutes[id] !== baseline.chutes[id] || plan.crew[id] !== baseline.crew[id]);
   const canMove = from !== to && plan[resource][from] > 0;
   const { held, transfer, unmapped, stale } = floor.excluded;
   return <div className="floor-board">
@@ -28,7 +31,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         <div className="floor-window" aria-label={`Forecast from ${time(scenario.nowMinute)} to ${time(floor.endMinute)}`}>{time(scenario.nowMinute)}–{time(floor.endMinute)}</div>
       </div>
       <div className="floor-summary" aria-live="polite" aria-atomic="true">
-        <div><span>Forecast packages</span><strong>{format(floor.packages)}</strong></div>
+        <div><span>Forecast from visible loads</span><strong>{format(floor.packages)}</strong></div>
         <div><span>Baseline shortfall · packages</span><strong>{format(floor.baseGap)}</strong></div>
         <div className={floor.gap ? "floor-risk" : "floor-clear"}><span>What-if shortfall · packages</span><strong>{format(floor.gap)}</strong></div>
       </div>
@@ -48,7 +51,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         <label>From<select value={from} onChange={e => setFrom(e.target.value as ZoneId)}>{scenario.zones.map(z => <option key={z.id} value={z.id}>{z.name} ({plan[resource][z.id]})</option>)}</select></label>
         <label>To<select value={to} onChange={e => setTo(e.target.value as ZoneId)}>{scenario.zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
         <button className="button primary" type="submit" disabled={!canMove}>Preview move</button>
-        <button className="button" type="button" disabled={!changed} onClick={() => setPlan(BASE_FLOOR_PLAN)}>Restore baseline</button>
+        <button className="button" type="button" disabled={!changed} onClick={() => setPlan(baseline)}>Restore baseline</button>
       </form>
       {!canMove && <p className="floor-action-status" role="status">{from === to ? "Choose two different destinations." : `No ${resource === "chutes" ? "chutes" : "crew members"} available to move from this zone.`}</p>}
       <div className="floor-disclosures">
@@ -63,16 +66,16 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         </details>
         <details>
           <summary>Capacity assumptions</summary>
-          <p>Demand includes on-site packages and arrivals expected by {time(floor.endMinute)}. Each zone can process up to {CHUTE_RATE} packages per chute and {CREW_RATE} per person per hour, whichever limit is reached first. Both rates are fictional.</p>
+          <p>Demand includes on-site packages and arrivals expected by {time(floor.endMinute)}. The simulated floor has {Object.values(baseline.chutes).reduce((a, b) => a + b, 0)} chutes and {Object.values(baseline.crew).reduce((a, b) => a + b, 0)} crew. Each zone is limited to {CHUTE_RATE} packages per chute or {CREW_RATE} per person per hour, whichever binds first.</p>
         </details>
       </div>
     </section>
     <section className="panel" aria-label="Shift record">
       <div className="floor-header"><div><h2>Shift record</h2>
         <p>{record ? `Fictional shift totals as of ${time(record.report.atMinute)}.` : `No shift record available as of ${time(scenario.nowMinute)}.`}</p>
-      </div></div>
+      </div>{targets && <span className="floor-window">Full-shift target ≈ {format(Math.round(targets.shiftPackages))}</span>}</div>
       {record && <dl className="floor-record">
-        <div><dt>Planned packages</dt><dd>{format(record.report.plannedPackages)}</dd></div>
+        <div><dt>Planned by this time</dt><dd>{format(record.report.plannedPackages)}</dd></div>
         <div><dt>Processed packages</dt><dd>{format(record.report.processedPackages)}</dd></div>
         <div className={record.variance < 0 ? "floor-record-warn" : undefined}><dt>Package variance</dt><dd>{record.variance > 0 ? "+" : ""}{format(record.variance)}</dd></div>
         <div><dt>First-pass yield</dt><dd>{record.yieldPercent === null ? "Unavailable" : `${record.yieldPercent.toFixed(1)}%`}</dd>

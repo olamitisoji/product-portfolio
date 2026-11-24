@@ -5,7 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { handleShiftAnalyst } from '../worker/shift-analyst.ts';
 import { createScenario } from '../lib/dock-fixtures.ts';
 import { usesSampleIdentities } from '../lib/analyst-eligibility.ts';
-import { BASE_FLOOR_PLAN, moveFloorResource } from '../lib/sort-floor.ts';
+import { BASE_FLOOR_PLAN, getBaselineFloorPlan, moveFloorResource } from '../lib/sort-floor.ts';
 import { advanceClock } from '../lib/dock-engine.ts';
 
 const endpoint = 'https://sortward.example/api/shift-analyst';
@@ -44,7 +44,7 @@ test('worker sends only a question and calculated shift records, and resolves re
   const q = query();
   q.mode = 'arrival';
   q.pickup = 'next';
-  q.floorPlan = moveFloorResource(BASE_FLOOR_PLAN, 'crew', 'A', 'B');
+  q.floorPlan = moveFloorResource(getBaselineFloorPlan(q.scenario), 'crew', 'A', 'B');
   q.scenario = advanceClock(q.scenario, 30);
   q.scenario.privateNotes = 'CUSTOMER_EMAIL_NOT_FOR_ANALYSIS';
   const r = await h.send(post(q));
@@ -72,7 +72,8 @@ test('worker sends only a question and calculated shift records, and resolves re
 
 test('unknown, malformed and oversized inputs never consume quota or call the model', async (t) => {
   const h = harness(t);
-  const badFloor = (key, values) => ({ ...BASE_FLOOR_PLAN, [key]: values });
+  const baseline = getBaselineFloorPlan(createScenario());
+  const badFloor = (key, values) => ({ ...baseline, [key]: values });
   for (const patch of [
     { question: '' }, { question: 'x'.repeat(601) }, { scenario: {} },
     { mode: 'invent' }, { pickup: 'all' }, { floorPlan: null }, { evidence: [] },
@@ -101,6 +102,20 @@ test('unknown, malformed and oversized inputs never consume quota or call the mo
   assert.equal((await h.send(new Request(endpoint, { method: 'POST', headers: jsonHeaders, body: 'x'.repeat(100_000) }))).status, 413);
   assert.equal(h.requests(), 0);
   assert.equal(h.context.calls.length, 0);
+});
+
+test('the analyst accepts allocations only from the resource pool of the submitted snapshot', async (t) => {
+  const h = harness(t);
+  const current = query();
+  const legacy = query();
+  delete legacy.scenario.volumePlan;
+  const currentFloor = getBaselineFloorPlan(current.scenario);
+  assert.equal((await h.send(post({ ...current, floorPlan: BASE_FLOOR_PLAN }))).status, 400);
+  assert.equal((await h.send(post({ ...legacy, floorPlan: currentFloor }))).status, 400);
+  assert.equal(h.requests(), 0);
+  assert.equal((await h.send(post({ ...legacy, floorPlan: BASE_FLOOR_PLAN }))).status, 200);
+  assert.equal((await h.send(post({ ...current, floorPlan: currentFloor }))).status, 200);
+  assert.equal(h.requests(), 2);
 });
 
 test('all three preset identities are recognized across seeds by both browser and worker', async (t) => {
