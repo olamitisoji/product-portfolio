@@ -22,9 +22,9 @@ I gave researchers control over the interview guide and how deeply Echo could pr
 
 During my Amazon operations internship, I completed an inbound heatmap that showed where the packages in each trailer were headed. Shift leads could see when unloading one more urgent trailer would put more work into an already busy area. Door suggestions based on that mix went into pilot.
 
-I rebuilt the workflow in Sortward using fictional data. Choose a pickup deadline, inspect the destination mix of a trailer and compare its door options. A timestamped shift record shows counted progress against target. The sorter view reveals which trailers send freight to each zone’s 200 destination chutes. A separate forecast lets you try different staffing and processing assignments. I added an AI analyst that explains a shift decision with links to the fictional records behind it.
+I rebuilt that workflow using fictional manifests for a facility planning around 600,000 packages a week. A shift lead can trace an incoming load to individual chutes, choose a door, and test a staffing move before the next pickup. **Ask Sortward** uses the same trailers and filters the operator sees. Ask why one chute is expecting more freight than another, then follow up to see which trailer accounts for the difference. Each answer points back to the shift records behind it.
 
-[Try Sortward](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Read the case study](portfolio/dockflow.md) · [Explore the code and setup](dockflow/README.md)
+[Try the chute heatmap](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site/?example=chutes#chute-map) · [Read the case study](portfolio/dockflow.md) · [Explore the code and setup](dockflow/README.md)
 
 ## Company work
 

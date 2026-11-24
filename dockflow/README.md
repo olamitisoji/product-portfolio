@@ -25,8 +25,6 @@ Filter the heatmap to expected arrivals and open **Ask Sortward**. Ask which two
 
 The analyst sends your question, bounded conversation references and records for the current view to OpenAI. Its answers can cite filtered manifests, pickup priorities, door alternatives and staffing projections. Expand a citation to inspect its source. Assignments and staffing changes stay under operator control.
 
-The public demo shares 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
-
 ## How it works
 
 The simulator uses deterministic functions written in TypeScript. One browser-local scenario supplies the heatmap, pickup queues, staffing view and door decisions. Operator approval, undo and the action history are features of the simulation. Every visitor works on their own copy.

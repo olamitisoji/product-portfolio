@@ -12,8 +12,8 @@ I designed Echo for researchers who want the back-and-forth of an interview with
 
 ## Sortward
 
-I built a trailer heatmap during my Amazon internship so shift leads could see which sorter destinations an incoming load would feed. Door suggestions went into pilot. Sortward is my independent simulator of that workflow. Follow a fictional load from its pickup window to a door. Check shift progress against its target, inspect each zone’s 200 fixed destination chutes, and test whether reassigning crew or processing capacity would cover forecast demand. The simulator also includes an AI analyst that cites the shift records behind its answers.
+I built a trailer heatmap during my Amazon internship so shift leads could see where an incoming load was headed. Door suggestions went into pilot. In Sortward, my independent simulator, you can see which of the facility’s 600 chutes a fictional load will feed and compare its door options. On the sort floor, ask the AI analyst where one more staffed position would help most. You can inspect the records it cites and try the move yourself.
 
-[Try Sortward](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Read the Sortward case study](dockflow.md) · [Explore the code](../dockflow)
+[Try Sortward](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site/?example=chutes#chute-map) · [Read the Sortward case study](dockflow.md) · [Explore the code](../dockflow)
 
 [Repository home](../README.md)

@@ -15,7 +15,7 @@ Run `npm test` and `npm run typecheck` from the app directory. The November 23 r
 | What actually happened this shift? | The report uses the latest available observation at or before the clock. First-pass yield requires a valid denominator. Moving resources in a forecast leaves recorded counts intact. |
 | Will a saved shift reopen safely? | Import validation, legacy snapshots, repeatable fixtures, CSV escaping, queue modes and uniform door constraints across multiple scenarios. |
 
-The analyst endpoint tests use a mocked provider and the actual quota migration in SQLite. They check that 36 simultaneous requests can trigger at most 30 provider calls, that the budget rolls over at midnight UTC, that an unavailable budget blocks a call, and that a response with a missing citation is suppressed. Tests also compare evidence with the active shift, cover all three generated presets and check rejection of unsupported identities. These automated tests exercise integration behavior separately from the live provider.
+The analyst endpoint tests use a mocked provider and the quota migration in SQLite. They check concurrent requests against the shared budget, its rollover at midnight UTC, and a database failure that prevents a provider call. They also cover missing citations, all three generated presets and rejection of unsupported identities. [Passing release run with 75 tests, type checking and a production build](https://github.com/olamitisoji/product-portfolio/actions/runs/45324160422)
 
 ## Reproduce a decision
 
@@ -31,7 +31,9 @@ The mobile check covered a zone's last bank, an empty chute and expected-only ar
 
 ## Product review
 
-The Expected-only map on the balanced shift has 745 packages. B090 leads with 107 assigned packages, followed by B091 with 76. Ask the analyst to compare those destinations, then ask which trailer contributes. Compare the cited records with the visible map. TR-109 supplies expected freight at this clock time.
+On the published demo, we filtered the balanced shift to expected arrivals at 10:00 and asked the live analyst to compare B090 and B091. It identified TR-109 as the source of all 107 and 76 packages respectively. A follow-up referring to “both of those chutes” returned the same trailer and the difference of 31 packages.
+
+On the sort floor, the live analyst identified a North-to-Central staffing move that reduced the projected shortfall for mapped freight by 60 packages. The panel flagged 829 packages with missing or outdated destination profiles. The operator could inspect the cited records before changing the plan. [Published analyst screenshot](../../portfolio/images/sortward-shift-analyst.jpg)
 
 At 11:00, 4,410 packages have stale profiles and 338 have missing routing data. The next-hour forecast cannot give a shortfall until usable profiles return. On the overview, Central has 2,078 sorter-directed packages against a capacity of 2,500. The 375 Central packages on the crossdock trailer bypass the sorter.
 

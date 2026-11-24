@@ -50,7 +50,7 @@ The server rebuilds the facts for the active screen from the fictional manifest,
 
 For destination questions, the server provides active manifest coverage, crossdock bypass volume and the highest known chute volume in each zone. An exact chute ID in the question adds a record for that destination. Each chute record names up to three contributing trailers and reports its share of active sorter volume.
 
-The public budget is 30 provider requests per UTC day. A single conditional D1 write reserves each slot, including failed provider attempts. The database stores a date and a count. The Responses request sets `store: false`, and the application does not keep questions or answers on its server. Imported identities outside the fictional presets cannot be used by the analyst.
+The worker reserves each model call with a single conditional D1 write before contacting the provider. Concurrent requests share the same daily budget, including failed provider attempts. D1 stores the date and count. The Responses request sets `store: false`. Sortward keeps the conversation in browser memory and accepts only sample facility and trailer identities for analysis.
 
 ## Implementation
 
