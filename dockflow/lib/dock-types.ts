@@ -1,4 +1,6 @@
 export type ZoneId = 'A' | 'B' | 'C';
+export type PackageSize = 'compact' | 'standard' | 'bulky';
+export type PackageMix = Record<ZoneId, Record<PackageSize, number>>;
 export type Handling = 'palletized' | 'cart' | 'loose' | 'crossdock';
 export type TrailerStatus = 'yard' | 'expected' | 'at_door' | 'complete';
 export type Priority = 'high' | 'medium' | 'low' | 'none';
@@ -17,12 +19,20 @@ export interface Trailer {
   currentUnits: number;
   nextUnits: number;
   zoneUnits: Record<ZoneId, number>;
+  packageMix?: PackageMix;
   profileKnown: boolean;
   profileUpdatedMinute: number | null;
   hold: boolean;
   currentDoorId: string | null;
   plannedDoorId: string | null;
 }
+export interface ShiftReport {
+  atMinute: number;
+  plannedPackages: number;
+  processedPackages: number;
+  firstPass?: { attempted: number; sorted: number };
+}
+
 export interface Scenario {
   version: 1;
   synthetic: true;
@@ -34,6 +44,7 @@ export interface Scenario {
   zones: Zone[];
   doors: Door[];
   trailers: Trailer[];
+  shiftReports?: ShiftReport[];
 }
 export interface PriorityDetail { level: Priority; reason: string; overdue: boolean }
 export interface DoorCandidate {

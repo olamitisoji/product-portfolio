@@ -1,39 +1,33 @@
 # Understanding Dockflow
 
-This is a small operations simulator. All facilities, loads, carriers, quantities and policies are fictional. It sends no assignments to a warehouse or transport system.
+Start with one row in the destination heatmap. It represents a trailer and shows where its packages are going. Compare its reported preassignment with the door review, then select the trailer to inspect the decision.
 
-## 1. A data model describes what the app knows
+## Read the heatmap
 
-`lib/dock-types.ts` defines the shape of a trailer, dock door, zone and scenario. TypeScript checks whether the rest of the code uses those shapes consistently. For example, a trailer has a lifecycle state, package counts, a handling category and an optional physical door.
+The three destination cells count packages on that trailer. A darker cell means that destination accounts for a larger share of the packages in the same row. Choosing a single size, such as bulky, changes both the counts and the shading. A dash means the manifest lacks that detail. A zero is a supplied count. The two deadline counts always apply to the full trailer.
 
-Types alone do not protect data loaded from a file or browser storage. `parseScenario` checks those values at runtime, rejects invalid combinations, and keeps the existing working state when an import fails.
+A trailer can be at a door, in the yard, expected or completed. Completing an unload moves the trailer into the completed group. The row retains its original manifest for inspection.
 
-## 2. Priority and feasibility answer different questions
+## Choose a pickup window
 
-Priority asks which work deserves attention first. This demo uses documented rules: current-deadline work, then next-deadline work, then other work. These are fictional policy choices, not a learned model or the original operation's thresholds.
+The pickup board answers which freight is due and whether it has arrived. Selecting the next window uses that window’s package counts. The view groups current backlog into docked, yard and expected work. The order changes as time runs short. The source for this fictional policy is [shift-priorities.ts](lib/shift-priorities.ts).
 
-Feasibility asks whether a specific trailer can use a specific door now. It checks physical occupancy, door enablement, handling support, destination zone, arrival, holds and profile freshness. High priority never bypasses those checks.
+Open **Sort floor** to see which destinations can absorb the next hour’s forecast. A zone with plenty of crew can still run short of chutes. Move one chute or one crew member between zones and compare their unserved package counts. The calculation lives in [sort-floor.ts](lib/sort-floor.ts).
 
-## 3. Pure functions make decisions testable
+## Review a door decision
 
-`evaluate(scenario, mode)` takes one scenario and returns a queue, demand view, warnings and proposals. It does not change the scenario or contact another system. Given identical inputs, it produces identical outputs.
+A preassigned door is an advisory from the scenario. It can disagree with the local recommendation. The simulator checks handling, destination mix, enabled doors and occupancy. It also checks the trailer’s arrival, hold and profile age.
 
-`applyAssignment` rechecks an operator's chosen door and returns a new scenario plus an audit event. The previous state remains intact, which makes undo possible and lets tests check before/after behavior precisely.
+A **proposed** door can be reviewed for a yard trailer. A **planning target** can help an operator prepare for an incoming load or a future opening. It never acquires the door. A **current door** records physical occupancy, including a trailer that is on hold or in the wrong location. When the profile is missing or stale, the row says what needs review.
 
-## 4. A recommendation is not a reservation
+## Change the shift
 
-The planner chooses primary proposals in queue order and avoids recommending the same door twice in that plan. It makes no operational change until the operator accepts a proposal. Acceptance rechecks the current state because a proposal may have become invalid after another action.
+Approving an assignment rechecks the door and records a local action. Completing an unload releases the door. Changing a hold, advancing the clock or adjusting a door changes the same scenario. React redraws the views from that current state.
 
-This is a greedy rule-based method: it makes one local choice at a time. It does not prove the best possible overall plan. Switching queue order illustrates tradeoffs rather than guaranteeing improvement.
+Undo retains up to 30 previous snapshots in the current page session. Reloading restores the saved scenario and action history in the same browser. JSON export creates a snapshot for later import. Older version 1 imports may have destination counts and no package-size breakdown. The parser preserves that distinction.
 
-## 5. The interface is another view of the same state
+## Explore the code
 
-React renders the queue, map, metrics and inspector from one scenario and evaluation. Changing a hold, door availability or capacity updates the same underlying state. The interface does not maintain a separate hidden copy of the business rules.
+[**dock-types.ts**](lib/dock-types.ts) defines the fields used throughout the simulator. [**dock-engine.ts**](lib/dock-engine.ts) validates imported data, computes feasible doors and rechecks assignments at approval. The [tests](tests) exercise the kinds of cases a shift lead runs into, including occupied doors, missing manifests and a trailer due before it can arrive.
 
-The simulator saves its synthetic state in this browser. That is not a shared database, a server audit trail or multi-user collaboration. Exports provide a portable snapshot. Reset restores generated example data. Undo retains up to 30 previous snapshots during the current page session; reloading keeps the scenario and action history, but clears the undo stack. The plan-order control is a viewing choice and resets to deadline priority after a reload.
-
-## 6. Tests check decisions, not business impact
-
-Automated tests can prove that an occupied door is not proposed, a bad import is rejected, or a repeated seed reproduces a scenario. They cannot prove warehouse adoption, time savings, accuracy against a real operation, or a financial outcome. Those would require separate evidence.
-
-Try this walkthrough: load Balanced → choose a waiting high-priority trailer → read its recommendation → accept it → observe door occupancy and the audit event → undo → disable that door → inspect the revised result. Then load Disruption and inspect how unknown or stale information changes what the app is willing to recommend.
+Try loading the disruption preset. Inspect a docked trailer with an incompatible handling assignment, then a yard trailer with an older profile. Notice that both require attention for different reasons and the occupied door stays occupied.

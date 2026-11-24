@@ -1,48 +1,37 @@
 # Dockflow
 
-[Open the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
+[Open Dockflow](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
-An independent inbound-operations simulator: prioritize fictional trailers, inspect destination demand, and review compatible dock-door proposals before accepting a simulated assignment.
+A shift lead has several decisions to make before a trailer unloads. Where do its packages need to go? How much is due in the next pickup? Can the suggested door take this freight? Where will the team need more people? Dockflow connects these decisions in an independent simulator built with fictional manifests, door rules and staffing assumptions.
 
-This project demonstrates operational decision support with deterministic rules. All facilities, carriers, loads, capacities and policies are synthetic. It contains no employer source code, operational records, service endpoints or integrations. It is not a production warehouse control system, an optimal scheduler or evidence of historical business impact.
+## Try a shift
 
-## Operator loop
+1. Open the destination heatmap. Read across one trailer to see its deadline volumes, package counts by destination, preassigned door and suggested placement. Filter by location or package size to see a different slice of the same manifest.
+2. Switch pickup windows to see due packages broken out by trailers on a door, in the yard and still expected. Advance the simulated clock to see arrival and priority changes.
+3. Inspect a trailer whose proposed door differs from the preassignment. A waiting trailer can receive an open, compatible door. An expected load or a trailer waiting for a compatible door to clear can have a planning target for later review.
+4. Accept a simulated assignment. Its door becomes occupied and the heatmap updates. Mark the trailer unloaded to release the door, or use Undo to return to the previous state.
+5. Open **Sort floor** to see where the next hour’s freight exceeds chute or crew capacity. Move a chute or a crew member between destinations and compare the remaining shortfall.
 
-1. Load a reproducible scenario and inspect current/next-deadline freight.
-2. See destination demand, physical door occupancy, and data-quality exceptions.
-3. Select a waiting trailer and read why a door is feasible or why the trailer is blocked.
-4. Accept a proposal or select another eligible door; every action revalidates the current state.
-5. Inspect the audit event, mark a trailer unloaded, undo, or export the synthetic snapshot.
+The package-size cells come from synthetic manifests. Older version 1 snapshots still open. When a snapshot lacks size detail, Dockflow shows a dash. Loading a newly generated preset supplies a complete example.
 
-Priority never overrides handling or destination compatibility. Holds never make a physically occupied door available. Missing or stale profiles remain explicit uncertainty. A recommendation itself changes no assignment.
+## Ask about the shift
 
-## Architecture
+Open **Ask Dockflow** and ask which yard trailer should unload next, why a preassigned door is occupied, or whether moving a chute would ease the next bottleneck. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
 
-```mermaid
-flowchart LR
-    Input[Seeded fictional scenario] --> Validation[Runtime validation]
-    Import[Synthetic JSON import] --> Validation
-    Validation --> State[Browser scenario state]
-    State --> Engine[Priority and feasibility rules]
-    Engine --> Views[Queue, zone demand, door plan]
-    Views --> Review[Operator review]
-    Review --> Recheck[Recheck current constraints]
-    Recheck --> State
-    Recheck --> Audit[Local audit and undo]
-    State --> Export[JSON and CSV export]
-```
+When enabled, the hosted analyst shares a limit of 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
 
-The core is plain TypeScript. React renders its results using the Sites/Vinext starter. No model API, database account or business-system access is required. State persists in the current browser; it is not shared across users or devices. The hosted demo is public and requires no sign-in. Each visitor has separate browser-local simulation state.
+## How it works
 
-- `lib/dock-types.ts`: explicit input, output and action types.
-- `lib/dock-engine.ts`: validation, priority, feasibility, proposals, actions and export.
-- `lib/dock-fixtures.ts`: repeatable synthetic scenarios.
-- `components/dock-dashboard.tsx`: interactive operator workflow.
-- `tests/dock-engine.test.mjs`: behavioral and constraint checks.
+The simulator uses deterministic functions written in TypeScript. One browser-local scenario supplies the heatmap, pickup queues, staffing view and door decisions. Operator approval, undo and the action history are features of the simulation. Every visitor works on their own copy.
+
+- [Data model](lib/dock-types.ts) and [fictional scenarios](lib/dock-fixtures.ts)
+- [Assignment rules and manifest validation](lib/dock-engine.ts)
+- [Pickup window planning](lib/shift-priorities.ts) and [sort-floor capacity](lib/sort-floor.ts)
+- [Decision walkthrough](LEARNING.md), [design](docs/DESIGN.md) and [verification record](docs/VERIFICATION.md)
 
 ## Run locally
 
-Requires Node.js 22.13 or newer. Clone the portfolio repository, then enter this folder:
+Install Node.js 22.13 or newer, then run:
 
 ```sh
 git clone https://github.com/olamitisoji/product-portfolio.git
@@ -51,7 +40,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by the server. The default portable preview port is 5173. No credentials need to be entered for local simulation.
+Open the local URL printed by the server. The default portable preview port is 5173. To run the checks:
 
 ```sh
 npm test
@@ -59,14 +48,11 @@ npm run typecheck
 npm run build
 ```
 
-## Rules and limits
+The simulator uses the Sites/Vinext starter. Its vendor licenses accompany the public source. The simulator runs locally without credentials. The optional analyst needs a server-side `OPENAI_API_KEY`, a D1 binding named `DB`, and [the quota migration](drizzle/0000_analyst_quota.sql). Run `npm run build` first for the local Worker configuration. To enable the analyst in a local preview, set the key in the ignored `.dev.vars` and run the following once for a new local database.
 
-The [design](docs/DESIGN.md) specifies the fictional rules and metric definitions. Arrival-order and priority-order planning are greedy comparisons; neither is claimed to be globally optimal. Destination pressure and projected physical workload are different synthetic ratios, not measured throughput or utilization. The simulated clock uses minutes on one fictional day, with no calendar, timezone or daylight-saving claim.
+```sh
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_analyst_quota.sql
+npm run start
+```
 
-Staffing, live feeds, real dispatch, external write-back, multi-user audit, calendar scheduling and measured operating outcomes are outside this first slice. Any historical work story must have separate evidence and must not reuse this demo's results as real impact.
-
-Read [LEARNING.md](LEARNING.md) for a plain-language walkthrough and [VERIFICATION.md](docs/VERIFICATION.md) for the checked behavior and remaining limits.
-
-## Publication and portability
-
-This folder contains the independent simulator and the licensed Sites/Vinext starter it uses. The public configuration has no Site identity or credentials. Local development and tests require no account; deploying your own copy requires a separate hosting setup. The included vendor license files cover the retained starter assets.
+[Evidence retrieval](lib/shift-evidence.ts) calculates the data the model may use. [The analyst endpoint](worker/shift-analyst.ts) calls the Responses API, validates the cited record IDs and returns the matching records to the browser.

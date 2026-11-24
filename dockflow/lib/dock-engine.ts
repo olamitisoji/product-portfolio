@@ -1,6 +1,6 @@
 import type {
-  ActionResult, Door, DoorCandidate, Evaluation, Handling, ParseResult, PlanMode,
-  PriorityDetail, Recommendation, Scenario, Trailer, TrailerStatus, Warning, Zone, ZoneId,
+  ActionResult, Door, DoorCandidate, Evaluation, Handling, PackageMix, ParseResult, PlanMode,
+  PriorityDetail, Recommendation, Scenario, ShiftReport, Trailer, TrailerStatus, Warning, Zone, ZoneId,
 } from './dock-types.ts';
 
 const ZONES: ZoneId[] = ['A', 'B', 'C'];
@@ -15,9 +15,14 @@ const time = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, 
 function cloneScenario(scenario: Scenario): Scenario {
   return {
     ...scenario,
+    ...(scenario.shiftReports && { shiftReports: structuredClone(scenario.shiftReports) }),
     zones: scenario.zones.map((zone) => ({ ...zone })),
     doors: scenario.doors.map((door) => ({ ...door, allowedHandling: [...door.allowedHandling] })),
-    trailers: scenario.trailers.map((trailer) => ({ ...trailer, zoneUnits: { ...trailer.zoneUnits } })),
+    trailers: scenario.trailers.map((trailer) => ({
+      ...trailer,
+      zoneUnits: { ...trailer.zoneUnits },
+      ...(trailer.packageMix && { packageMix: structuredClone(trailer.packageMix) }),
+    })),
   };
 }
 
@@ -42,12 +47,16 @@ function dataBlock(scenario: Scenario, trailer: Trailer): string | null {
     return 'This trailer is complete.';
   }
   if (trailer.arrivalMinute > scenario.nowMinute) return `Arrival at ${time(trailer.arrivalMinute)} has not occurred.`;
-  if (trailer.hold) return 'On hold; release the hold before approving a new assignment.';
-  if (trailer.packageCount === 0) return 'Empty load; no packages to assign.';
-  if (!trailer.profileKnown || trailer.profileUpdatedMinute === null) return 'Destination profile is missing; supply a valid synthetic profile before assignment. Timestamp refresh cannot fill missing data.';
-  if (trailer.profileUpdatedMinute > scenario.nowMinute) return 'Profile timestamp is in the future; correct the scenario before assignment.';
+  return freightBlock(scenario, trailer)?.detail ?? null;
+}
+
+function freightBlock(scenario: Scenario, trailer: Trailer): { label: string; detail: string } | null {
+  if (trailer.hold) return { label: 'On hold', detail: 'Release the planning hold before approving a new assignment.' };
+  if (trailer.packageCount === 0) return { label: 'Empty load', detail: 'Empty load; no packages to assign.' };
+  if (!trailer.profileKnown || trailer.profileUpdatedMinute === null) return { label: 'Missing manifest', detail: 'Destination profile is missing; supply a valid synthetic profile before assignment. Timestamp refresh cannot fill missing data.' };
+  if (trailer.profileUpdatedMinute > scenario.nowMinute) return { label: 'Future timestamp', detail: 'Profile timestamp is in the future; correct the scenario before assignment.' };
   const age = scenario.nowMinute - trailer.profileUpdatedMinute;
-  if (age > FRESH_MINUTES) return `Profile is stale (${age} minutes old; maximum ${FRESH_MINUTES}); refresh before assignment.`;
+  if (age > FRESH_MINUTES) return { label: 'Stale manifest', detail: `Profile is stale (${age} minutes old; maximum ${FRESH_MINUTES}); refresh before assignment.` };
   return null;
 }
 
@@ -273,6 +282,67 @@ export function evaluate(scenario: Scenario, mode: PlanMode = 'priority'): Evalu
   };
 }
 
+export type DoorReview =
+  | { kind: 'proposal' | 'physical'; doorId: string; detail: string }
+  | { kind: 'conditional'; doorId: string; label: string; detail: string }
+  | { kind: 'review'; doorId: null; label: string; detail: string }
+  | { kind: 'complete'; doorId: null; detail: string };
+
+export interface LoadDoorRow {
+  trailer: Trailer;
+  decision: DoorReview;
+  preassignmentDiffers: boolean;
+  placementIssues: Warning[];
+}
+
+export function buildLoadDoorBoard(scenario: Scenario, evaluation: Evaluation): LoadDoorRow[] {
+  const occupied = occupancy(scenario);
+  const proposals = new Map(evaluation.recommendations.map(item => [item.trailerId, item]));
+  const claimed = new Map(evaluation.recommendations.flatMap(item =>
+    item.primary ? [[item.primary.doorId, item.trailerId] as const] : []));
+  const trailers = new Map(scenario.trailers.map(trailer => [trailer.id, trailer]));
+
+  function doorDecision(trailer: Trailer): DoorReview {
+    if (trailer.status === 'complete') return { kind: 'complete', doorId: null, detail: 'Unloading complete.' };
+    if (trailer.status === 'at_door') {
+      return { kind: 'physical', doorId: trailer.currentDoorId!, detail: 'Occupied by this trailer.' };
+    }
+    const recommendation = proposals.get(trailer.id);
+    if (recommendation?.primary) {
+      return { kind: 'proposal', doorId: recommendation.primary.doorId, detail: recommendation.reason };
+    }
+    const blocker = freightBlock(scenario, trailer);
+    if (blocker) return { kind: 'review', doorId: null, ...blocker };
+
+    // Yard proposals keep first claim. A planning target never changes occupancy.
+    const compatible = scenario.doors.filter(door =>
+      door.enabled && handlingMatches(door, trailer) && destinationMatches(door, trailer));
+    const availability = (door: Door) => occupied.has(door.id) ? 2 : claimed.has(door.id) ? 1 : 0;
+    compatible.sort((a, b) => availability(a) - availability(b) || byId(a.id, b.id));
+    const target = compatible[0];
+    if (!target) {
+      return { kind: 'review', doorId: null, label: 'No eligible door', detail: recommendation?.reason ?? 'No enabled door matches this destination and handling profile.' };
+    }
+    const residents = occupied.get(target.id);
+    const earlier = claimed.get(target.id);
+    const detail = residents ? `Wait for ${residents.map(load => load.id).join(', ')} to release this door.`
+      : earlier ? `Earlier proposal for ${earlier} uses this door.`
+      : 'Check this door again on arrival.';
+    return { kind: 'conditional', doorId: target.id, label: residents ? 'Door occupied' : earlier ? 'Earlier proposal' : 'Awaiting arrival', detail };
+  }
+
+  return evaluation.queueIds.map(id => {
+    const trailer = trailers.get(id)!;
+    const decision = doorDecision(trailer);
+    return {
+      trailer, decision,
+      preassignmentDiffers: !!trailer.plannedDoorId && !!decision.doorId && trailer.plannedDoorId !== decision.doorId,
+      placementIssues: evaluation.warnings.filter(warning => warning.trailerIds.includes(id) &&
+        ['wrong-destination', 'wrong-handling', 'disabled-occupied-door', 'duplicate-occupancy'].includes(warning.code)),
+    };
+  });
+}
+
 export function applyAssignment(scenario: Scenario, trailerId: string, doorId: string, reason?: string): ActionResult {
   const trailer = scenario.trailers.find((item) => item.id === trailerId);
   if (!trailer) throw new Error(`Unknown trailer ${trailerId}; assignment was not applied.`);
@@ -417,12 +487,27 @@ export function parseScenario(input: unknown): ParseResult {
         B: integer(own(zoneSource, 'B'), `${path} zone B units`),
         C: integer(own(zoneSource, 'C'), `${path} zone C units`),
       };
+      let packageMix: PackageMix | undefined;
+      if (hasOwn(load, 'packageMix')) {
+        const mix = record(own(load, 'packageMix'), `${path} package mix`);
+        const sizes = (zone: ZoneId) => {
+          const row = record(own(mix, zone), `${path} zone ${zone} package mix`);
+          const read = (size: string) => integer(own(row, size), `${path} zone ${zone} ${size} packages`);
+          const compact = read('compact');
+          const standard = read('standard');
+          const bulky = read('bulky');
+          if (compact + standard + bulky !== zoneUnits[zone]) errors.push(`${path} zone ${zone} package mix must sum to its destination units.`);
+          return { compact, standard, bulky };
+        };
+        packageMix = { A: sizes('A'), B: sizes('B'), C: sizes('C') };
+      }
       const profileKnown = bool(own(load, 'profileKnown'), `${path} profileKnown`);
       const profileUpdatedMinute = own(load, 'profileUpdatedMinute') === null ? null : integer(own(load, 'profileUpdatedMinute'), `${path} profile timestamp`, 1440);
       const packageCount = integer(own(load, 'packageCount'), `${path} package count`);
       const currentUnits = integer(own(load, 'currentUnits'), `${path} current deadline units`);
       const nextUnits = integer(own(load, 'nextUnits'), `${path} next deadline units`);
       if (currentUnits + nextUnits > packageCount) errors.push(`${path} deadline units cannot exceed its package count.`);
+      if (!profileKnown && packageMix) errors.push(`${path} cannot report a destination size mix with an unknown profile.`);
       const zoneTotal = zoneUnits.A + zoneUnits.B + zoneUnits.C;
       if (profileKnown && (zoneTotal !== packageCount || profileUpdatedMinute === null)) errors.push(`${path} known profile requires destination units equal to package count and a timestamp.`);
       if (!profileKnown && (zoneTotal !== 0 || profileUpdatedMinute !== null)) errors.push(`${path} unknown profile requires zero destination units and a null timestamp.`);
@@ -434,17 +519,54 @@ export function parseScenario(input: unknown): ParseResult {
         id: identifier(own(load, 'id'), `${path} ID`), carrier: text(own(load, 'carrier'), `${path} carrier`),
         status, arrivalMinute: integer(own(load, 'arrivalMinute'), `${path} arrival`, 1440),
         handling: enumeration(own(load, 'handling'), HANDLING, `${path} handling`), packageCount, currentUnits, nextUnits,
-        zoneUnits, profileKnown, profileUpdatedMinute, hold: bool(own(load, 'hold'), `${path} hold`),
+        zoneUnits, ...(packageMix && { packageMix }), profileKnown, profileUpdatedMinute, hold: bool(own(load, 'hold'), `${path} hold`),
         currentDoorId, plannedDoorId: nullableDoor('plannedDoorId'),
       };
     });
     unique(trailers.map((trailer) => trailer.id), 'Trailers');
     // Accessors/inherited fields never satisfy required schema fields; unknown fields are discarded.
+    let shiftReports: ShiftReport[] | undefined;
+    if (hasOwn(source, 'shiftReports')) {
+      shiftReports = list(own(source, 'shiftReports'), 'Shift reports', 96).map((value, index) => {
+        const path = `Shift report ${index + 1}`;
+        const row = record(value, path);
+        const report: ShiftReport = {
+          atMinute: integer(own(row, 'atMinute'), `${path} minute`, 1440),
+          plannedPackages: integer(own(row, 'plannedPackages'), `${path} planned packages`),
+          processedPackages: integer(own(row, 'processedPackages'), `${path} processed packages`),
+        };
+        if (hasOwn(row, 'firstPass')) {
+          const firstPass = record(own(row, 'firstPass'), `${path} first-pass counts`);
+          const attempted = integer(own(firstPass, 'attempted'), `${path} unique first attempts`);
+          const sorted = integer(own(firstPass, 'sorted'), `${path} first-pass successes`);
+          if (sorted > attempted || sorted > report.processedPackages) {
+            errors.push(`${path} first-pass successes exceed attempted or processed packages.`);
+          }
+          report.firstPass = { attempted, sorted };
+        }
+        return report;
+      }).sort((a, b) => a.atMinute - b.atMinute);
+      let previous: ShiftReport | undefined;
+      let lastScans: ShiftReport['firstPass'];
+      for (const report of shiftReports) {
+        if (previous && (report.atMinute === previous.atMinute || report.plannedPackages < previous.plannedPackages ||
+          report.processedPackages < previous.processedPackages)) {
+          errors.push('Shift reports need distinct times and nondecreasing cumulative plan and processed counts.');
+        }
+        const scans = report.firstPass;
+        if (scans && lastScans && (scans.sorted < lastScans.sorted ||
+          scans.attempted - scans.sorted < lastScans.attempted - lastScans.sorted)) {
+          errors.push('Cumulative first-pass successes and misses cannot decrease.');
+        }
+        if (scans) lastScans = scans;
+        previous = report;
+      }
+    }
     for (const field of ['version', 'synthetic', 'seed', 'name', 'nowMinute', 'currentDeadlineMinute', 'nextDeadlineMinute', 'zones', 'doors', 'trailers']) {
       if (!hasOwn(source, field)) errors.push(`Missing scenario field: ${field}.`);
     }
     return errors.length ? { ok: false, errors } : {
-      ok: true, scenario: { version: 1, synthetic: true, seed, name, nowMinute, currentDeadlineMinute, nextDeadlineMinute, zones, doors, trailers },
+      ok: true, scenario: { version: 1, synthetic: true, seed, name, nowMinute, currentDeadlineMinute, nextDeadlineMinute, zones, doors, trailers, ...(shiftReports && { shiftReports }) },
     };
   } catch {
     return { ok: false, errors: ['Scenario could not be safely read. Import a plain synthetic JSON object.'] };

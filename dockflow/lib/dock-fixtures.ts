@@ -49,6 +49,20 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
   const tied = trailers[10];
   const half = Math.floor(tied.packageCount / 2);
   tied.zoneUnits = { A: half, B: half, C: tied.packageCount - 2 * half };
+  // Fictional manifest counts reconcile to each destination, including mixed loads.
+  for (const trailer of trailers) {
+    if (!trailer.profileKnown) continue;
+    const split = (units: number) => {
+      const compact = Math.floor(units * (0.15 + random() * 0.5));
+      const standard = Math.floor((units - compact) * (0.35 + random() * 0.5));
+      return { compact, standard, bulky: units - compact - standard };
+    };
+    trailer.packageMix = {
+      A: split(trailer.zoneUnits.A),
+      B: split(trailer.zoneUnits.B),
+      C: split(trailer.zoneUnits.C),
+    };
+  }
   if (disruption) {
     trailers[1].handling = 'loose'; // Known mismatch remains physically at B-01.
     trailers[4].hold = true;
@@ -72,5 +86,15 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
       { id: 'X-01', zoneId: null, allowedHandling: ['crossdock'], enabled: true },
     ],
     trailers,
+    // Cumulative readings from an independent fictional shift log. A what-if never rewrites history.
+    shiftReports: [570, 600, 630, 660].map((atMinute, i) => {
+      const plannedPackages = (i + 1) * (surge ? 980 : 650);
+      const processedPackages = Math.round(plannedPackages * (disruption ? 0.78 : surge ? 0.87 : 1.035));
+      const attempted = processedPackages + 40 * (i + 1);
+      return {
+        atMinute, plannedPackages, processedPackages,
+        firstPass: { attempted, sorted: Math.round(attempted * (disruption ? 0.72 : 0.86)) },
+      };
+    }),
   };
 }

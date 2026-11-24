@@ -1,44 +1,37 @@
 # Dockflow
 
-## Inbound operations decision support
+## Inbound shift planning
 
 [Try the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [View the source](https://github.com/olamitisoji/product-portfolio/tree/main/dockflow) · [View automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
-**Status:** Public, interactive portfolio simulator. All operational data and policies are fictional.
+**My role** · Product design and AI-assisted implementation of the public simulator
 
-### The problem
+### The operational question
 
-Choosing the next trailer to unload requires more than a priority list. A load may be urgent while its compatible door is occupied, its destination profile is outdated, or its handling requirements rule out the available doors. An operator needs to see urgency, physical constraints, and missing information together before acting.
+During my Amazon operations internship, I worked on sorter first-pass yield, the share of packages that reach their intended destination on their first pass. A package that misses a chute takes up belt capacity again. The first question at the dock was which freight was due for the next pickup. The next was where that freight would go once we unloaded it.
 
-### My contribution
+### What I built on site
 
-I used my operational workflow experience to define an independent demonstration of this decision process. I directed the product requirements and worked with AI coding assistance to build, test, and publish the simulator while developing my technical skills. Dockflow uses newly written code and synthetic scenarios; the original workplace tools and any historical outcomes are separate from this portfolio project.
+I completed a consolidated inbound heatmap that brought trailer status, pickup deadlines and package destinations together. Shift leads could compare what was at the doors with what was in the yard and what was still coming. They could see when an incoming trailer would feed an area already carrying a heavy workload. The door suggestion feature went into pilot.
 
-### What the product does
+### What I rebuilt
 
-Dockflow brings a deadline-based queue, destination-demand heatmap, door plan, and exception list into one workspace. A researcher or hiring manager can load a repeatable scenario, select a waiting trailer, and inspect a proposed door or the reason no proposal is available. The operator accepts a simulated assignment or chooses another eligible door with a required explanation. Local history, completion, undo, and JSON or CSV export make the decision sequence reviewable.
+I used fictional manifests, an original facility layout and independent operating rules to recreate those decisions in Dockflow. A shift lead can drill from a pickup window to an individual trailer, see the mix going to each destination, and compare possible doors with the existing door plan and physical occupancy.
 
-### Decisions that shaped the implementation
+I gave a shift lead two ways to read the floor. A timestamped fictional shift record shows how much work has been counted against the target at that point in the shift. The capacity view looks ahead. It compares forecast demand with the current crew and chute allocation, then recalculates the shortfall if the lead moves resources between areas. Approval and undo are features I added for the public demo so visitors can try an assignment and inspect the change in the plan.
 
-The recommendation engine uses explicit TypeScript rules. This makes a proposed assignment traceable to the constraints that permitted it. Deadline priority changes the order of consideration; it never overrides physical occupancy, handling compatibility, destination compatibility, or data freshness.
+I built **Ask Dockflow** to answer questions about a sample shift using the current manifest, pickup window and capacity forecast, with citations a shift lead can inspect before making a decision.
 
-A held trailer still occupies its door. An unknown destination profile stays unknown rather than being filled in by a refresh. Accepting a recommendation checks the current state again, because a previously feasible action can become invalid after another change. Recommendations themselves do not move trailers.
+### Walk through a shift
 
-The first release runs in the browser with three reproducible scenario presets. This keeps the demonstration accessible without warehouse credentials or infrastructure and lets reviewers compare arrival order with deadline priority on the same synthetic state. Browser storage preserves a visitor's work, but does not provide a shared operational database.
+1. Choose a pickup window and compare packages assigned to that pickup with the total packages inside those trailers.
+2. Select a trailer in the heatmap. Inspect the destinations it serves and compare an available door with the planned door or an occupied alternative.
+3. Check the timestamp on the shift record and compare counted progress with its target. Then compare forecast demand with baseline capacity. Try moving staff or chutes and see which area becomes constrained.
+4. Approve an eligible assignment, check the new physical occupancy, then undo it.
 
-### Evidence and limits
+### How I would evaluate it
 
-The published verification record documents 24 passing behavioral tests, a successful type check and production build, and browser checks covering assignments, manual choices, persistence, completion, undo, invalid imports, and mobile layout. The public deployment was also checked without sign-in.
-
-This demonstrates a working decision-support loop. It does not establish warehouse productivity gains: the planner is greedy, the capacity ratios are synthetic, and there are no live feeds or dispatch commands. A next validation step would be a scenario-based usability session measuring whether operators can explain a recommendation, recognize a blocked load, and recover from an incorrect choice.
-
-### Three minute demo
-
-1. Open the demo and identify the synthetic-data label. Explain that the queue and heatmap describe the same fictional facility.
-2. Select a waiting trailer. Read its priority, profile age, destination mix, and proposed door or blocking reason.
-3. Change **Plan order** between **Deadline priority** and **Arrival order**. Explain that the order changes while the eligibility rules stay fixed.
-4. Select an eligible proposal and click **Accept simulated assignment**. Show the resulting physical occupancy, then open **Rules & scenarios** to inspect the local action history.
-5. Use **Undo** to restore the preceding state. Finish by explaining the boundary: this demonstrates advisory decisions with human review, not a connection to a live warehouse.
+I would compare first-pass yield across shifts with a similar freight mix and record why operators accepted or overrode each suggestion. That would help distinguish an improvement in sorting from a shift that happened to receive easier freight.
 
 ### Technical documentation
 

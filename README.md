@@ -2,7 +2,7 @@
 
 [Personal website](https://soji-agboola-portfolio.boileditem.chatgpt.site)
 
-I’m a 2x founder and MBA candidate at Cornell. I designed and built these two products with AI coding tools. One helps my research team decide what to ask next in an interview. The other helps an inbound operator decide which trailer to unload next.
+I’m a 2x founder and MBA candidate at Cornell. I designed and built these two products with AI coding tools. One helps my research team decide what to ask next in an interview. The other helps a shift lead plan for the freight inside each arriving trailer.
 
 ## Echo
 
@@ -18,9 +18,9 @@ I gave researchers control over the interview guide and how deeply Echo could pr
 
 ## Dockflow
 
-The most urgent trailer in a queue can still have nowhere to unload. I built Dockflow so an inbound operator can see which trailers need attention, which doors can take them, and what is blocking an assignment.
+During my Amazon operations internship, I completed an inbound heatmap that showed where the packages in each trailer were headed. Shift leads could see when unloading one more urgent trailer would put more work into an already busy area. Door suggestions based on that mix went into pilot.
 
-I chose explicit rules so the operator can see why Dockflow recommends a door and decide whether to accept it. In the public simulator, you can switch from arrival order to deadline priority, approve an assignment and undo it. All warehouse data in the demo is fictional.
+I rebuilt the workflow in Dockflow using fictional data. Choose a pickup deadline, inspect the destination mix of a trailer and compare its door options. A timestamped shift record shows counted progress against target. A separate forecast lets you compare expected demand with capacity before and after moving staff or chutes. I added an AI analyst that explains a shift decision with links to the fictional records behind it.
 
 [Try Dockflow](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Read the case study](portfolio/dockflow.md) · [Explore the code and setup](dockflow/README.md)
 
