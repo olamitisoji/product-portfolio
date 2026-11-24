@@ -2,7 +2,7 @@
 
 ## Inbound operations decision support
 
-[Try the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [View the source](https://github.com/olamitisoji/AI-Deployment-Projects/tree/main/dockflow) · [View automated checks](https://github.com/olamitisoji/AI-Deployment-Projects/actions/workflows/dockflow.yml)
+[Try the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [View the source](https://github.com/olamitisoji/product-portfolio/tree/main/dockflow) · [View automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
 **Status:** Public, interactive portfolio simulator. All operational data and policies are fictional.
 

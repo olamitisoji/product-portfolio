@@ -1,6 +1,6 @@
 # Dockflow
 
-[Open the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/AI-Deployment-Projects/actions/workflows/dockflow.yml)
+[Open the public demo](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site) · [Automated checks](https://github.com/olamitisoji/product-portfolio/actions/workflows/dockflow.yml)
 
 An independent inbound-operations simulator: prioritize fictional trailers, inspect destination demand, and review compatible dock-door proposals before accepting a simulated assignment.
 
@@ -45,8 +45,8 @@ The core is plain TypeScript. React renders its results using the Sites/Vinext s
 Requires Node.js 22.13 or newer. Clone the portfolio repository, then enter this folder:
 
 ```sh
-git clone https://github.com/olamitisoji/AI-Deployment-Projects.git
-cd AI-Deployment-Projects/dockflow
+git clone https://github.com/olamitisoji/product-portfolio.git
+cd product-portfolio/dockflow
 npm ci
 npm run dev
 ```

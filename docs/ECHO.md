@@ -33,8 +33,8 @@ The model supplies schema-validated analysis and evidence; application code cont
 Requires **Python 3.13+**, **Node.js 22.13+**, and a POSIX shell. Clone this repository and run from its root directory. No Supabase, Meta, or OpenAI account is required to inspect the dashboard, edit the seeded draft, or run the automated tests.
 
 ```sh
-git clone https://github.com/olamitisoji/AI-Deployment-Projects.git
-cd AI-Deployment-Projects
+git clone https://github.com/olamitisoji/product-portfolio.git
+cd product-portfolio
 python3 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements.lock
 .venv/bin/python scripts/configure_local.py
@@ -77,7 +77,7 @@ npm run typecheck
 npm run build
 ```
 
-The automated checks use provider test doubles. They cover consent, follow-up limits, delivery retries, participant controls, transcript retrieval and withdrawal. The verification record gives the results for the public code snapshot and the later test on a real phone. [Test results](VERIFICATION.md) · [GitHub Actions](https://github.com/olamitisoji/AI-Deployment-Projects/actions/workflows/checks.yml)
+The automated checks use provider test doubles. They cover consent, follow-up limits, delivery retries, participant controls, transcript retrieval and withdrawal. The verification record gives the results for the public code snapshot and the later test on a real phone. [Test results](VERIFICATION.md) · [GitHub Actions](https://github.com/olamitisoji/product-portfolio/actions/workflows/checks.yml)
 
 ## Further reading
 
