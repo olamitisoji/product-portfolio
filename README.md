@@ -1,33 +1,24 @@
 # Soji Agboola | Product Portfolio
 
-[Personal website](https://soji-agboola-portfolio.boileditem.chatgpt.site)
-
-I’m a 2x founder and MBA candidate at Cornell. I designed and built these two products with AI coding tools. One helps my research team decide what to ask next in an interview. The other helps a shift lead plan for the freight inside each arriving trailer.
+I’m a 2x founder and a Cornell MBA candidate. I built Echo and Sortward with AI coding tools. This repository includes the code and product decisions behind both projects, alongside case studies from my work at Barrel and Okra. [Personal website](https://soji-agboola-portfolio.boileditem.chatgpt.site)
 
 ## Echo
 
-Echo is an AI interviewer for qualitative research on WhatsApp. Participants answer by voice note or text on their own schedule. I built it so that when someone mentions an unexpected problem, Echo can ask a follow-up while the details are still fresh.
-
-I gave researchers control over the interview guide and how deeply Echo could probe. The AI interprets each answer and suggests a question. The application checks consent and decides whether to ask it. We completed an interview on Meta’s WhatsApp test number, from the first voice note through follow-ups, pause, resume and transcript review.
-
-**In our team’s internal research, turnaround went from roughly two weeks to under three days.**
+Researchers share an interview link. Participants answer on WhatsApp by voice note or text, and Echo asks follow-up questions within a guide the researcher approves. In our team’s internal research, turnaround went from roughly two weeks to under three days.
 
 <a name="local-quickstart"></a>
 
-[Read the case study](portfolio/echo.md) · [Run Echo locally](docs/ECHO.md#local-quickstart) · [See what we tested](docs/VERIFICATION.md)
+[Read the case study](portfolio/echo.md) · [Run Echo locally](docs/ECHO.md#local-quickstart) · [See the WhatsApp test](docs/VERIFICATION.md#internal-whatsapp-test-november-2026)
 
 <a id="dockflow"></a>
 
 ## Sortward
 
-During my Amazon operations internship, I completed an inbound heatmap that showed where the packages in each trailer were headed. Shift leads could see when unloading one more urgent trailer would put more work into an already busy area. Door suggestions based on that mix went into pilot.
+Which trailer should get the next open door, and can the sort floor handle what’s inside? I built an independent simulator where shift leads can trace incoming freight to its destination chutes, compare door options, and ask an AI analyst to explain a staffing move using the same fictional shift records they see.
 
-I rebuilt that workflow using fictional manifests for a facility planning around 600,000 packages a week. A shift lead can trace an incoming load to individual chutes, choose a door, and test a staffing move before the next pickup. **Ask Sortward** uses the same trailers and filters the operator sees. Ask why one chute is expecting more freight than another, then follow up to see which trailer accounts for the difference. Each answer points back to the shift records behind it.
-
-[Try the chute heatmap](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site/?example=chutes#chute-map) · [Read the case study](portfolio/dockflow.md) · [Explore the code and setup](dockflow/README.md)
+[Try the chute heatmap](https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site/?example=chutes#chute-map) · [Read the case study](portfolio/dockflow.md) · [Explore the code](dockflow/README.md)
 
 ## Company work
 
-- At Barrel, customer behavior led us to rethink our procurement product and build AI agents for HR, IT and finance teams. [Barrel case study](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/barrel/)
-- At Okra, I defined how we classified income and worked with engineering to set precision and recall thresholds. [Okra case study](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/okra/)
-- At Amazon, I explored how incoming freight mix could inform dock assignments. [Amazon case study](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/amazon/)
+- At **Barrel**, customers used our procurement tool for work we hadn’t designed it for. Their behavior led us to build enterprise AI agents for HR, IT and finance. [Barrel case study](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/barrel/)
+- At **Okra**, seeing how people paid in Nigeria helped us choose enterprise platforms for OkraPay. I led the launch that brought in eight early adopters. The product went on to process $100M+ in total payment volume. [Okra case study](https://soji-agboola-portfolio.boileditem.chatgpt.site/work/okra/)

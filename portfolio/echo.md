@@ -18,8 +18,6 @@ I kept the participant experience inside WhatsApp, where people were already com
 
 The hardest decision was how much freedom to give the interviewer. A fixed list would recreate the original voice-note problem. An unrestricted interviewer could keep probing the same point. I designed a guide that specifies which details matter and how many follow-ups are allowed. The model interprets each reply and proposes a question. The application enforces consent, tracks what the participant has already covered, and decides which actions the guide allows.
 
-I designed the experience from invitation through transcript review and used AI coding tools to build the backend and researcher workspace.
-
 ## What happened
 
 We completed a real-device interview on Meta’s WhatsApp test number. Echo received consent, transcribed voice notes, sent relevant follow-ups, handled pause and resume, and completed the interview. The researcher could retrieve the transcript afterward.

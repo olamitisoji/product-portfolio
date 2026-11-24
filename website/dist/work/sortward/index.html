@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sortward | Soji Agboola</title>
+  <link rel="canonical" href="https://soji-agboola-portfolio.boileditem.chatgpt.site/work/sortward/">
+  <meta name="description" content="How I designed Sortward to help shift leads choose which trailer to unload, see where its packages are headed, and test whether the sort floor can absorb the work.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css?v=888f4813953d">
+  <script src="/script.js?v=a577da7dbcba" defer></script>
+</head>
+<body class="case-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav-inner" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="Soji Agboola home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Soji Agboola</a>
+      <a class="back-link" href="/#work"> All work</a>
+    </nav>
+  </header>
+  <main id="main" class="case-layout">
+    <header class="case-header">
+      <p class="eyebrow">Independent project</p>
+      <h1 class="case-title">Sortward</h1>
+      <p class="case-deck">Which trailer should get the next open door, and can the sort floor handle what’s inside?</p>
+      <dl class="case-meta">
+        <div><dt>My role</dt><dd>Product design and development</dd></div>
+        <div><dt>Designed for</dt><dd>Inbound shift leads</dd></div>
+        <div><dt>Status</dt><dd>Public simulator with synthetic data</dd></div>
+      </dl>
+    </header>
+    <div class="case-columns">
+      <article class="case-body">
+        <section>
+          <h2>The decision at the dock</h2>
+          <p>During my Amazon operations internship, I worked on a problem that started at the dock and showed up on the conveyor belt. A shift lead could give the next door to a trailer carrying freight due for pickup. If too many of those packages were headed to the same busy chute, some could miss it and go around the belt again. The pickup deadline told us which load was urgent. The destinations inside the trailer told us what unloading it would mean for the floor.</p>
+          <p>I built a heatmap that brought those two pieces of information together. Door suggestions based on the freight mix went into pilot. Later, I built Sortward independently with fictional manifests so anyone could try making that call.</p>
+        </section>
+        <section>
+          <h2>What a recommendation needed to show</h2>
+          <p>I organized Sortward around the next pickup. A lead can see which packages are due, trace them to their destination chutes, and check whether a compatible door is free. The sample facility plans for 600,000 packages a week across three zones with 200 chutes each. Starting with a single trailer gives the lead a way into that much detail.</p>
+          <p>One design choice was to keep a planned door separate from a door the lead could use now. In the sample shift, trailer TR-103 is assigned to A-01 in the original plan, but that door is occupied. Sortward shows A-02 as an available alternative. The lead can inspect the load before accepting the move.</p>
+        </section>
+        <section>
+          <h2>Where AI earns its place</h2>
+          <p>A staffing move helps one zone and takes capacity away from another. I wanted a lead to be able to ask, “Where would one more staffed position help most, and what happens to the zone it comes from?” Sortward calculates the effect of each move. Its AI analyst compares the options and points to the shift records behind its answer.</p>
+          <p>At 10:00 in the sample shift, moving one staffed position from North to Central cuts the next hour’s projected shortfall from 276 packages to 216. North still has room for its known load. But 829 packages have missing or outdated destination data. I put that number beside the recommendation because learning where those packages are headed could change the call.</p>
+        </section>
+        <section>
+          <h2>What I’d test on a real shift</h2>
+          <p>On shifts handling similar freight, I’d measure how much due freight makes its pickup and how often packages reach the right chute on their first pass. That would tell me whether a better-looking dock plan also improves the outcome on the floor. I’d review overrides with shift leads to learn which constraints they could see that the recommendation missed.</p>
+        </section>
+        <div class="case-actions">
+          <a class="button" href="https://dockflow-inbound-lab-olami-1110.boileditem.chatgpt.site/?example=chutes#chute-map">Try the sample shift</a>
+          <a class="button button-secondary" href="https://github.com/olamitisoji/product-portfolio/tree/main/dockflow">Explore the code </a>
+        <a class="button button-secondary" href="/work/barrel/" aria-label="Next project: Barrel">Next project</a></div>
+      </article>
+      <aside class="case-aside" aria-label="Project context">
+        <figure>
+          <a href="/assets/dockflow.jpg?v=d74f1a902fde" aria-label="View the full size shift heatmap"><img src="/assets/dockflow.jpg?v=d74f1a902fde" alt="The Sortward heatmap shows planned volume by destination chute alongside the door proposal for trailer TR-103." loading="lazy"></a>
+          <figcaption>Selecting a trailer brings its planned destinations and door options into the same view.</figcaption>
+        </figure>
+        <a class="text-link" href="https://github.com/olamitisoji/product-portfolio/blob/main/dockflow/docs/VERIFICATION.md">Read the verification record </a>
+      </aside>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="footer-inner"><a href="/">Soji Agboola</a><a href="/#contact">Get in touch </a><a href="https://www.linkedin.com/in/olamitisoji" rel="me">LinkedIn</a><a href="https://x.com/Olamitisoji" rel="me" aria-label="Soji Agboola on X">X</a><a href="https://github.com/olamitisoji/product-portfolio">GitHub </a></div></footer>
+</body>
+</html>

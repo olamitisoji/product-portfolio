@@ -6,11 +6,11 @@ The local API and worker have connected to a cloud Supabase PostgreSQL database 
 
 Runtime privilege assertions, denied anonymous/authenticated table access, an ORM insert/rollback, and worker singleton-lock checks passed. A public REST request using a publishable key was also denied, and the security advisor returned no findings at that check. These results validate the recorded database configuration; they do not certify the whole application.
 
-The dashboard, API, and worker currently run locally with local researcher authentication. There is no public Echo deployment, configured production researcher login, or completed real WhatsApp interview. The sample study remains an unapproved draft; no participant interviews are included. The Docker recipe has not been executed.
+The public source starts the dashboard, API and worker locally with researcher authentication and an unapproved sample study. A separately configured internal instance completed an interview on Meta’s WhatsApp test number. Commercial eligibility remains unverified. [Internal WhatsApp test](VERIFICATION.md#internal-whatsapp-test-november-2026)
 
 ## Local settings
 
-Start with the [SQLite quickstart](../README.md#local-quickstart). `scripts/configure_local.py` generates private local backend/dashboard settings and refuses to replace existing values. It also prepares Docker configuration. New local settings default to no AI key or external key-file dependency; existing private settings are preserved.
+Start with the [SQLite quickstart](ECHO.md#local-quickstart). `scripts/configure_local.py` generates private local backend/dashboard settings and refuses to replace existing values. It also prepares Docker configuration. New local settings default to no AI key or external key-file dependency; existing private settings are preserved.
 
 When starting from `backend`, `ECHO_ENV_FILE=.env` selects SQLite settings; an independently prepared `ECHO_ENV_FILE=.env.supabase` can select cloud PostgreSQL. Restart the API and worker after switching. Keep the encryption key stable for existing records. Never copy a database while changing the key without an explicit re-encryption migration.
 

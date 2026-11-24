@@ -1,8 +1,8 @@
 # Supabase database
 
-A Supabase PostgreSQL deployment was verified on **10 November 2026**. The local API and worker connected to it; this is a verified database integration, not a public product release or completed WhatsApp interview. Researcher authentication in the recorded runtime remains local. The sample study is unapproved, and no participant interviews are included.
+On 10 November 2026, the local Echo API and worker connected to Supabase PostgreSQL. The database check used local researcher authentication and an unapproved sample study. The [verification record](../docs/VERIFICATION.md#cloud-postgresql-checks) lists the access and isolation checks.
 
-Project identifiers, connection hostnames, credentials, and operator-specific configuration are intentionally absent from the repository. Supply your own authorized project when reproducing these steps. The [SQLite quickstart](../README.md#local-quickstart) does not require Supabase.
+Project identifiers, connection hostnames, credentials, and operator-specific configuration are intentionally absent from the repository. Supply your own authorized project when reproducing these steps. The [SQLite quickstart](../docs/ECHO.md#local-quickstart) does not require Supabase.
 
 ## Schema migrations
 

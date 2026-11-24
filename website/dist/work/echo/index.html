@@ -3,59 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Echo — Soji Agboola</title>
+  <title>Echo: AI-Powered Research Interviews on WhatsApp | Soji Agboola</title>
   <meta name="description" content="Echo is Soji Agboola’s WhatsApp research interviewer prototype, combining adaptive follow-ups with application-owned consent, state, and limits.">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
-  <script src="/script.js" defer></script>
+  <link rel="stylesheet" href="/styles.css?v=888f4813953d">
+  <script src="/script.js?v=a577da7dbcba" defer></script>
+  <style>
+    .case-meta.echo-meta{display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,1.65fr);column-gap:32px;row-gap:0;margin-top:44px}
+    .echo-meta>div{max-width:none;min-width:0}
+    .echo-meta .echo-fact{grid-column:1;padding:18px 0;border-bottom:1px solid #d6dbcf}
+    .echo-meta .echo-fact:first-child{border-top:1px solid #d6dbcf}
+    .echo-meta .echo-fact dt{font-size:14px;color:#72786c;margin:0 0 8px}
+    .echo-meta .echo-fact dd{font-size:23px;line-height:1.3;letter-spacing:-.035em;color:#252c20}
+    .echo-status{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #b8c9ae;border-radius:24px;background:#eaf0e4;font-size:15px;letter-spacing:0;line-height:1.35}
+    .echo-status::before{content:'';width:6px;height:6px;flex:none;border-radius:50%;background:#527349}
+    .echo-meta .echo-impact{grid-column:2;grid-row:1/4;background:#e9edff;border:1px solid #bdcaff;border-radius:4px;padding:28px 30px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+    .echo-impact::after{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border:1px solid #bdcaff;border-radius:50%;box-shadow:0 0 0 20px #dce4ff,0 0 0 21px #cbd6ff;pointer-events:none}
+    .echo-meta .echo-impact dt{font-size:14px;color:#4960a6;margin:0 0 10px;position:relative;z-index:1}
+    .echo-meta .echo-impact dd{position:relative;z-index:1;width:100%}
+    .impact-title{display:block;color:#253a7d;font-size:21px;letter-spacing:-.025em;margin-bottom:27px}
+    .impact-comparison{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .impact-before,.impact-after{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+    .impact-number{font-size:72px;font-weight:450;letter-spacing:-.07em;color:#6b7698}
+    .impact-unit{font-size:20px;letter-spacing:-.025em;margin-top:8px;color:#66718f}
+    .impact-arrow{font-size:30px;color:#8b9bd1;font-weight:400}
+    .impact-after .impact-number,.impact-after .impact-unit{color:#345cf5}
+    .impact-under{font-size:15px;letter-spacing:0;color:#345cf5;margin-bottom:8px}
+    .impact-before{padding-top:23px}
+    @media(max-width:900px){.case-meta.echo-meta{grid-template-columns:minmax(210px,1fr) minmax(0,1.5fr);column-gap:22px}.echo-meta .echo-impact{padding:25px 22px}.impact-number{font-size:62px}.impact-comparison{gap:13px}.echo-meta .echo-fact dd{font-size:21px}}
+    @media(max-width:650px){.case-meta.echo-meta{grid-template-columns:1fr;gap:0;margin-top:32px}.case-meta.echo-meta>div{margin:0}.echo-meta .echo-fact{padding:16px 0}.echo-meta .echo-impact{grid-column:1;grid-row:auto;margin-top:25px;padding:28px 24px}.impact-comparison{justify-content:flex-start;gap:38px}.impact-title{font-size:20px}.impact-number{font-size:66px}.echo-meta .echo-fact dd{font-size:22px}}
+    @media(prefers-reduced-motion:reduce){.echo-meta *{animation:none!important}}
+  </style>
 </head>
 <body class="case-page">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="nav-inner" aria-label="Main navigation">
-      <a class="brand" href="/" aria-label="Soji Agboola home">s<span>a</span><i aria-hidden="true">✳</i></a>
-      <a class="back-link" href="/#work">← All work</a>
+      <a class="brand" href="/" aria-label="Soji Agboola home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Soji Agboola</a>
+      <a class="back-link" href="/#work"> All work</a>
     </nav>
   </header>
   <main id="main" class="case-layout">
     <header class="case-header">
-      <p class="eyebrow">Independent project · Prototype</p>
+      <p class="eyebrow">Independent project Prototype</p>
       <h1 class="case-title">Echo</h1>
-      <p class="case-deck">Research conversations that can unfold through voice notes.</p>
-      <dl class="case-meta">
-        <div><dt>My role</dt><dd>Product direction &amp; AI-assisted prototyping</dd></div>
-        <div><dt>Focus</dt><dd>Adaptive qualitative interviews</dd></div>
-        <div><dt>Status</dt><dd>Real WhatsApp voice interview unverified</dd></div>
+      <p class="case-deck">AI-Powered Research Interviews on WhatsApp</p>
+      <dl class="case-meta echo-meta">
+        <div class="echo-fact"><dt>My role</dt><dd>Product Design</dd></div>
+        <div class="echo-fact"><dt>Focus</dt><dd>Conversational AI</dd></div>
+        <div class="echo-fact"><dt>Status</dt><dd><span class="echo-status">Built &amp; Used Internally</span></dd></div>
+        <div class="echo-impact"><dt>Impact</dt><dd><span class="impact-title">Research Turnaround</span><div class="impact-comparison" aria-label="2 weeks to under 3 days"><span class="impact-before"><span class="impact-number">2</span><span class="impact-unit">weeks</span></span><span class="impact-arrow" aria-hidden="true">→</span><span class="impact-after"><span class="impact-under">Under</span><span class="impact-number">3</span><span class="impact-unit">days</span></span></div></dd></div>
       </dl>
     </header>
     <div class="case-columns">
       <article class="case-body">
         <section>
-          <h2>Where the idea came from</h2>
-          <p>My team’s research into specialized AI models for healthcare administration involved conversations with professionals, executives, researchers, and technical decision makers. We wanted to understand operational problems and the reliability limits of existing systems before choosing a product opportunity.</p>
-          <p>Echo explores an asynchronous format: participants answer through WhatsApp voice notes while an AI interviewer asks relevant, neutral follow-up questions.</p>
+          <h2>Why I Started Echo</h2>
+          <p>I was working with a team on a research project exploring specialized AI models for healthcare administration. We needed to speak with industry professionals, researchers, and technical decision-makers to better understand their workflows and challenges.</p>
+          <p>Getting people to agree to interviews wasn't necessarily the problem. Finding time on their calendars was.</p>
+          <p>Some people offered to send voice notes answering our questions instead. That seemed like a practical workaround until I started listening to their responses. Sometimes someone would mention something interesting I wanted to explore further. Other times, an answer raised more questions than it answered.</p>
+          <p>In a normal interview, I'd simply ask a follow-up. With voice notes, that wasn't as straightforward.</p>
+          <p>So I started wondering: why couldn't I send someone a link on WhatsApp, let them answer whenever they had time, and still have the kind of back-and-forth I'd get in a live interview?</p>
+          <p>That's how Echo started. I wasn't trying to build a research platform. I just wanted to solve a problem we kept running into.</p>
         </section>
         <section>
-          <h2>My contribution</h2>
-          <p>I defined the participant journey and requirements for conversational pathways, consent, participant controls, and reviewable decisions. With AI coding assistance, I translated those requirements into a backend and researcher workspace while learning the architecture.</p>
-          <p>A researcher edits and approves a guide, then creates an invitation. The intended participant flow explains AI use, collects consent, and accepts text or voice answers. The backend retrieves and normalizes audio, requests transcription and structured analysis, saves the result, and queues the next question.</p>
+          <h2>What I Built</h2>
+          <p>Echo is an AI interviewer that conducts research conversations through WhatsApp.</p>
+          <p>I provide the interview questions and research objectives. Echo asks the questions, processes voice-note or text responses, and uses conversational pathways to determine when to probe deeper, ask for clarification, or move to the next topic.</p>
+          <p>It also transcribes and organizes the conversations so I can review the responses without manually piecing together multiple voice notes.</p>
         </section>
         <section>
-          <h2>A deliberate boundary for the model</h2>
-          <p>The model supplies analysis; application code controls consent, transitions, follow-up limits, and sending. Durable records preserve progress across messages and restarts. Pause, withdrawal, and support requests take precedence over questioning. Duplicate detection and durable message processing address delivery failures without assuming a repeated send is harmless.</p>
+          <h2>My Role</h2>
+          <p>I designed the interview experience, from participant invitations to how completed interviews would be reviewed.</p>
+          <p>The most interesting challenge was designing the conversational pathways. I needed Echo to recognize when an answer deserved a follow-up without getting stuck asking unnecessary questions.</p>
+          <p>I also worked through consent, interview pauses, conversation memory, and participant controls.</p>
+          <p>Using AI coding tools, I built the backend and researcher workspace while learning more about APIs, agent architecture, and software development.</p>
+          <p>One important design decision was separating the AI's judgment from the application's rules. The AI interprets responses and recommends questions, while the application controls consent, interview progress, and message delivery.</p>
         </section>
         <section>
-          <h2>What has been verified</h2>
-          <p>The recorded checks include 132 backend tests, 10 dashboard gateway tests, type checking, a production build, and a restricted cloud database connection. Offline interview tests replace Meta and OpenAI with test doubles.</p>
-          <p>A real WhatsApp voice interview and live transcription quality remain unverified. The next milestone is a consented real-device test followed by review of follow-up relevance, neutrality, and objective coverage. Hosted access and commercial platform eligibility also need verification.</p>
+          <h2>Results &amp; Learnings</h2>
+          <p>We've since used Echo to conduct interviews across the different ideas our team is exploring.</p>
+          <p><strong>What previously took roughly two weeks of coordinating schedules, chasing responses, and conducting interviews now takes less than three days.</strong></p>
+          <p>Participants can respond when it's convenient for them, and we can review the transcripts without manually transcribing each conversation.</p>
+          <p>Echo has been tested through a working WhatsApp integration, including voice-note transcription, follow-up questions, consent, pause and resume, and interview completion. I also added automated tests for the interview flow, access controls, invitations, and data deletion.</p>
+          <p>The experience has taught me a lot about building with AI, particularly the importance of combining flexible model behavior with clear application rules.</p>
+          <p>There's still work to do around evaluating interview quality across different scenarios, but Echo has already solved the problem I originally built it for.</p>
         </section>
         <div class="case-actions">
-          <a class="button" href="https://github.com/olamitisoji/product-portfolio#echo">Explore the prototype ↗</a>
-          <a class="button button-secondary" href="https://github.com/olamitisoji/product-portfolio/blob/main/docs/VERIFICATION.md">View verification ↗</a>
-        </div>
+          <a class="button" href="https://github.com/olamitisoji/product-portfolio#echo">Explore the prototype </a>
+          <a class="button button-secondary" href="https://github.com/olamitisoji/product-portfolio/blob/main/docs/VERIFICATION.md">View verification </a>
+        <a class="button button-secondary" href="/work/sortward/" aria-label="Next project: Sortward">Next project</a></div>
       </article>
       <aside class="case-aside" aria-label="Interview workflow">
-        <p class="eyebrow">The intended journey</p>
+        <p class="eyebrow">The interview journey</p>
         <h2>A conversation with structure</h2>
         <ol class="pathway-steps">
           <li><strong>Approve the guide</strong><span>Research objectives, questions, and limits.</span></li>
@@ -63,11 +103,10 @@
           <li><strong>Listen and follow up</strong><span>Voice or text, with bounded adaptation.</span></li>
           <li><strong>Review the evidence</strong><span>Transcripts, coverage, and decision records.</span></li>
         </ol>
-        <p>Implemented flow; live-provider validation is still pending.</p>
-        <a class="text-link" href="https://github.com/olamitisoji/product-portfolio/blob/main/docs/ENGINE.md">Read the conversation rules ↗</a>
+        <a class="text-link" href="https://github.com/olamitisoji/product-portfolio/blob/main/docs/ENGINE.md">Read the conversation rules </a>
       </aside>
     </div>
   </main>
-  <footer class="site-footer"><div class="footer-inner"><a href="/">Soji Agboola</a><a href="/#contact">Get in touch ↗</a><a href="https://github.com/olamitisoji/product-portfolio">GitHub ↗</a></div></footer>
+  <footer class="site-footer"><div class="footer-inner"><a href="/">Soji Agboola</a><a href="/#contact">Get in touch </a><a href="https://www.linkedin.com/in/olamitisoji" rel="me">LinkedIn</a><a href="https://x.com/Olamitisoji" rel="me" aria-label="Soji Agboola on X">X</a><a href="https://github.com/olamitisoji/product-portfolio">GitHub </a></div></footer>
 </body>
 </html>

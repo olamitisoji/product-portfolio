@@ -20,7 +20,7 @@ I completed a consolidated inbound heatmap that brought trailer status, pickup d
 
 I used fictional manifests, an original facility layout and independent operating rules to recreate those decisions in Sortward. A shift lead can drill from a pickup window to an individual trailer, see the mix going to each destination, and compare possible doors with the existing door plan and physical occupancy.
 
-The fictional facility plans for about 600,000 packages per week. Across two shifts a day and seven operating days, that works out to about 42,857 packages per shift. The heatmap shows the subset of trailers under review at that moment. A timestamped shift record shows how much work has been counted against the target at that point in the shift. Each zone has 200 fixed destination chutes. Select one to see the packages scheduled for it and which trailers carry them. The capacity forecast shows where a shortfall remains after reassigning crew members or processing positions. Approval and undo are features I added for the public demo so visitors can try an assignment and inspect the change in the plan.
+The sample facility plans for 600,000 packages a week. The heatmap follows the subset of trailers in the current shift across three zones with 200 chutes each. A shift lead can compare the planned destination of a load with the capacity to handle it before approving a door assignment.
 
 ### A decision the analyst can help with
 
@@ -34,12 +34,7 @@ In the 10:00 sample shift, the analyst suggested moving one staffed position fro
 
 ![Sortward’s shift desk showing package volume by destination chute and a door proposal for the selected trailer.](../website/dist/assets/dockflow.jpg)
 
-1. Choose a pickup window and compare packages assigned to that pickup with the total packages inside those trailers.
-2. Select a trailer in the heatmap. Inspect the destinations it serves and compare an available door with the planned door or an occupied alternative.
-3. Check the timestamp on the shift record and compare counted progress with its target. Then compare forecast demand with baseline capacity. Try reassigning crew members or processing positions and see which area becomes constrained.
-4. Approve an eligible assignment, check the new physical occupancy, then undo it.
-
-For a quick check of the analyst, filter the heatmap to **Expected** and compare chutes B090 and B091. At 10:00, trailer TR-109 accounts for all 107 packages headed to B090 and all 76 headed to B091. Ask “How many more is it sending to the first?” to see it follow the comparison across questions.
+In the sample shift, TR-103 is due for pickup and its planned door, A-01, is occupied. Inspect its load, compare the proposed A-02 assignment, then use Undo to see what changed. The [walkthrough](../dockflow/README.md#try-a-shift) covers pickup windows, chute routing and staffing. The [verification record](../dockflow/docs/VERIFICATION.md#product-review) includes the live analyst’s two-chute comparison.
 
 ### How I would evaluate it
 
