@@ -17,9 +17,6 @@
   border-bottom: 1px solid var(--studio-line);
 }
 .studio-brand {
-  display: inline-flex;
-  gap: 9px;
-  align-items: center;
   color: #14353b;
   font-family: var(--display);
   font-weight: 600;
@@ -27,19 +24,6 @@
   text-decoration: none;
   letter-spacing: -.065em;
 }
-.sortward-symbol {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 31px;
-  height: 31px;
-  border-radius: 4px;
-  background: #163d40;
-}
-.sortward-symbol i { display: block; width: 5px; height: 13px; background: #d8e9df; border-radius: 1px; transform: skewY(-30deg); }
-.sortward-symbol i:nth-child(2) { height: 19px; background: #8cc2b9; }
-.sortward-symbol i:nth-child(3) { height: 10px; background: #d69a6c; }
 .studio-file, .studio-command, .simulation-tag, .rail-heading, .studio-mobile-nav { display: flex; align-items: center; }
 .studio-file { gap: 9px; padding-left: 21px; border-left: 1px solid var(--studio-line); font-size: 13px; color: #61716d; }
 .studio-file strong { color: #2f4845; font-weight: 590; }
@@ -155,8 +139,7 @@
 }
 @media (max-width:740px) {
   .studio-header { height: 49px; padding: 0 12px; gap: 7px; }
-  .studio-brand { font-size: 24px; gap: 6px; }
-  .sortward-symbol { width: 27px; height: 27px; }
+  .studio-brand { font-size: 24px; }
   .studio-file { display: none; }
   .studio-command { gap: 8px; }
   .simulation-tag { font-size: 10px; }

@@ -104,6 +104,19 @@ test('unknown, malformed and oversized inputs never consume quota or call the mo
   assert.equal(h.context.calls.length, 0);
 });
 
+test('the worker retrieves the requested physical chute without sending the manifest array', async (t) => {
+  const h = harness(t, () => success('chute-A199'));
+  const q = query();
+  q.question = 'Which trailers list chute A199?';
+  const r = await h.send(post(q));
+  assert.equal(r.status, 200);
+  const { citations } = await r.json();
+  assert.equal(citations[0].id, 'chute-A199');
+  const records = h.context.calls[0].parsed.evidence;
+  assert.ok(records.filter(row => row.id.startsWith('chute-')).length <= 5);
+  assert.doesNotMatch(JSON.stringify(records), /chuteRoutes/);
+});
+
 test('the analyst accepts allocations only from the resource pool of the submitted snapshot', async (t) => {
   const h = harness(t);
   const current = query();

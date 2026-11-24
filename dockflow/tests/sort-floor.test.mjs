@@ -12,7 +12,7 @@ test('resource transfers expose the next constraint and protect the shared resou
   const revised = evaluateSortFloor(scenario, layout);
   const beforeB = original.zones.find(z => z.zone === 'B');
   const afterB = revised.zones.find(z => z.zone === 'B');
-  assert.equal(beforeB.proposed.limitingResource, 'Chutes');
+  assert.equal(beforeB.proposed.limitingResource, 'Staffed positions');
   assert.equal(beforeB.proposed.units, 1620);
   assert.equal(afterB.proposed.units, 1680);
   assert.equal(afterB.proposed.limitingResource, 'Crew');
@@ -81,7 +81,7 @@ test('remaining minutes limit hourly capacity at the end of the fictional day', 
   assert.equal(floor.gap, 0);
 });
 
-test('the clock reveals a recorded shift observation, independent of a chute or staffing preview', () => {
+test('the clock reveals a recorded shift observation, independent of a proposed capacity allocation', () => {
   const scenario = createScenario();
   const current = currentShiftRecord(scenario);
   assert.equal(current.report.atMinute, 600);

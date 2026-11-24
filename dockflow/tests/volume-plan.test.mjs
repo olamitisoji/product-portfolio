@@ -51,6 +51,7 @@ test('a legacy import retains counts and an unknown weekly target; invalid expli
   delete legacy.shiftReports;
   legacy.trailers = [{ ...legacy.trailers[0], packageCount: 17, zoneUnits: { A: 17, B: 0, C: 0 } }];
   delete legacy.trailers[0].packageMix;
+  delete legacy.trailers[0].chuteRoutes;
   const restored = parseScenario(legacy);
   assert.deepEqual(restored.scenario, legacy);
   const later = advanceClock(restored.scenario);

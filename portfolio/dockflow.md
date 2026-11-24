@@ -20,17 +20,17 @@ I completed a consolidated inbound heatmap that brought trailer status, pickup d
 
 I used fictional manifests, an original facility layout and independent operating rules to recreate those decisions in Sortward. A shift lead can drill from a pickup window to an individual trailer, see the mix going to each destination, and compare possible doors with the existing door plan and physical occupancy.
 
-The fictional facility plans for about 600,000 packages per week. Across two shifts a day and seven operating days, that works out to about 42,857 packages per shift. The heatmap shows the subset of trailers under review at that moment. A timestamped shift record shows how much work has been counted against the target at that point in the shift. The capacity view looks ahead. It compares forecast demand with the current crew and chute allocation, then recalculates the shortfall if the lead moves resources between areas. Approval and undo are features I added for the public demo so visitors can try an assignment and inspect the change in the plan.
+The fictional facility plans for about 600,000 packages per week. Across two shifts a day and seven operating days, that works out to about 42,857 packages per shift. The heatmap shows the subset of trailers under review at that moment. A timestamped shift record shows how much work has been counted against the target at that point in the shift. Each zone has 200 fixed destination chutes. Select one to see the packages scheduled for it and which trailers carry them. The capacity forecast shows where a shortfall remains after reassigning crew members or processing positions. Approval and undo are features I added for the public demo so visitors can try an assignment and inspect the change in the plan.
 
 I built **Ask Sortward** to answer questions about a sample shift using the current manifest, pickup window and capacity forecast, with citations a shift lead can inspect before making a decision.
 
 ### Walk through a shift
 
-![Sortward shift desk with pickup deadlines, a trailer destination heatmap and door details for the selected trailer.](../website/dist/assets/dockflow.jpg)
+![Sortward’s shift desk showing package volume by destination chute and a door proposal for the selected trailer.](../website/dist/assets/dockflow.jpg)
 
 1. Choose a pickup window and compare packages assigned to that pickup with the total packages inside those trailers.
 2. Select a trailer in the heatmap. Inspect the destinations it serves and compare an available door with the planned door or an occupied alternative.
-3. Check the timestamp on the shift record and compare counted progress with its target. Then compare forecast demand with baseline capacity. Try moving staff or chutes and see which area becomes constrained.
+3. Check the timestamp on the shift record and compare counted progress with its target. Then compare forecast demand with baseline capacity. Try reassigning crew members or processing positions and see which area becomes constrained.
 4. Approve an eligible assignment, check the new physical occupancy, then undo it.
 
 ### How I would evaluate it

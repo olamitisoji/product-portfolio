@@ -18,6 +18,8 @@ The optional size matrix is compatible with existing version 1 snapshots. Every 
 
 The heatmap groups trailers by physical state. An expected trailer can have a preassignment without occupying the door. Completed loads retain their manifest rows and drop out of active work totals. An occupied door remains occupied even if the load is held, has a handling mismatch or shares a reported location with another load.
 
+Each of the three fictional zones has 200 fixed destination chutes. Generated sorter manifests allocate each known zone total to particular chutes. A chute’s share uses the selected package volume headed for the sorter, including packages missing chute detail. Crossdock transfers bypass the sorter. Adding routed, unmapped and bypassed packages recovers the total manifest volume. An older manifest can identify a zone without specifying any chutes. Manifest allocations describe intended destinations. The simulator has no arrival scans at individual chutes.
+
 ## Pickup priorities
 
 The operator can inspect the current or next pickup window. Its package backlog is split between docked trailers, the yard and expected arrivals. Held and blocked work stays visible in the backlog. An expected load arriving at or after cutoff carries a timing warning.
@@ -40,11 +42,13 @@ Operator approval rechecks current feasibility. An alternative door requires an 
 
 Floor planning considers the next hour, bounded by the end of the simulated day. For each destination it adds eligible onsite freight and expected freight that can arrive within that horizon. Held loads, transfer freight, stale and unmapped profiles are tracked as exclusions. Known package sizes and volume without size detail are shown separately.
 
-The baseline assigns fictional chutes and crew to zones. For the selected horizon each pool produces a package limit based on its own per-hour rate. The smaller limit determines zone capacity. Unserved demand is the positive difference between forecast package count and capacity. Moving one chute or one crew member from one zone to another preserves the size of each resource pool. The comparison is a planning scenario; staffing changes have no effect on physical door eligibility.
+The weekly facility scenario allocates 25 staffed processing positions and 22 crew across the three floor zones. For the selected horizon each pool produces a package limit based on its own hourly rate. The smaller limit determines zone capacity. Unserved demand is the positive difference between forecast package count and capacity. Reallocating one staffed position or crew member preserves the size of each resource pool. The 600 physical destination chutes have fixed identities independent of these allocations.
 
 ## Shift analyst
 
 The server first reconstructs trusted facts from the fictional scenario, selected pickup and proposed floor plan. It gives those records and the question to GPT-4.1 mini. The model writes an answer and selects record IDs from a strict schema. The server checks the IDs and attaches their original facts. This makes it possible to inspect an answer's sources. The operator retains control of every assignment. A valid citation alone cannot establish that every model claim is correct.
+
+For destination questions, the server provides active manifest coverage, crossdock bypass volume and the highest known chute volume in each zone. An exact chute ID in the question adds a record for that destination. Each chute record names up to three contributing trailers and reports its share of active sorter volume.
 
 The public budget is 30 provider requests per UTC day. A single conditional D1 write reserves each slot, including failed provider attempts. The database stores a date and a count. The Responses request sets `store: false`, and the application does not keep questions or answers on its server. Imported identities outside the fictional presets cannot be used by the analyst.
 
@@ -52,6 +56,7 @@ The public budget is 30 provider requests per UTC day. A single conditional D1 w
 
 - [Manifest, door and scenario types](../lib/dock-types.ts)
 - [Seeded scenarios](../lib/dock-fixtures.ts)
+- [Physical chute routing and trailer contributions](../lib/chute-routing.ts)
 - [Validation, queue evaluation, door review and simulated actions](../lib/dock-engine.ts)
 - [Pickup window review](../lib/shift-priorities.ts)
 - [Sort-floor demand and capacity](../lib/sort-floor.ts)

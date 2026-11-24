@@ -1,4 +1,5 @@
 import { buildLoadDoorBoard, evaluate } from './dock-engine.ts';
+import { buildChuteMap, chuteZone, CHUTES_PER_ZONE, type ChuteCell } from './chute-routing.ts';
 import { createScenario } from './dock-fixtures.ts';
 import type { PlanMode, Scenario, Trailer, ZoneId } from './dock-types.ts';
 import { planPickupWindow, type PickupWindow } from './shift-priorities.ts';
@@ -37,10 +38,42 @@ function safeReferences(scenario: Scenario) {
   return { load: (id: string) => loads.get(id)!, door: (id: string) => doors.get(id)!, zone };
 }
 
+function chuteEvidence(scenario: Scenario, refs: ReturnType<typeof safeReferences>, question: string): ShiftEvidence[] {
+  const map = buildChuteMap(scenario);
+  const requested = question.toUpperCase().match(/\b[ABC][0-9]{3}\b/g)?.find(id => chuteZone(id));
+  const unknownZone = map.unmappedPackages - map.zones.reduce((sum, zone) => sum + zone.unmappedPackages, 0);
+  const records = [{
+    id: 'chute-coverage', label: 'Destination routing coverage',
+    text: `Fictional manifests contain ${map.totalPackages} active packages across ${map.trailerCount} trailers. ${map.bypassedPackages} crossdock packages bypass the sorter. Manifests assign ${map.routedPackages} of ${map.sorterPackages} sorter packages to physical chutes. ${map.unmappedPackages} packages lack a chute assignment, including ${unknownZone} with an unknown zone. Each of the three zones has ${CHUTES_PER_ZONE} fixed destination chutes. Arrival scans at individual chutes are unavailable.`,
+  }];
+  for (const zone of map.zones) {
+    const name = refs.zone(zone.id);
+    const peak = zone.chutes.reduce((best, cell) => cell.packages > best.packages ? cell : best);
+    const unassigned = zone.unmappedPackages + unknownZone;
+    function describe(cell: ChuteCell, rank = '') {
+      const contributors = summarizeList(cell.sources.map(source => `${refs.load(source.trailerId)} (${stage[source.status]}, ${source.packages} packages)`));
+      const share = map.sorterPackages ? `${cell.sharePercent.toFixed(2)}% of active sorter packages` : 'no active sorter freight';
+      records.push({
+        id: `chute-${cell.id}`, label: `Chute ${cell.id} · ${name}`,
+        text: `${cell.id} in ${name}: ${cell.packages} packages assigned by active manifests (${share}). ${rank}Contributing trailers: ${contributors}. ${unassigned ? 'The destination of additional packages is unknown. ' : ''}Arrival scan confirmation is unavailable.`,
+      });
+    }
+    if (peak.packages) {
+      const ties = zone.chutes.filter(cell => cell.packages === peak.packages).length;
+      describe(peak, ties > 1 ? `Joint highest known volume among ${ties} chutes in this zone. ` : 'Highest known chute volume in this zone. ');
+    } else {
+      records.push({ id: `chute-zone-${zone.id}`, label: `${name} chute routing`, text: `No ranked chute in ${name}. Active manifests assign zero packages to individual chutes here. ${zone.unmappedPackages} packages have a known zone and no chute detail. Across the facility, ${unknownZone} additional packages have an unknown zone.` });
+    }
+    const exact = requested && zone.chutes.find(cell => cell.id === requested);
+    if (exact && (exact.id !== peak.id || !peak.packages)) describe(exact);
+  }
+  return records;
+}
+
 // Callers validate the scenario, selected plan and pickup before this projection.
 // The scenario schema limits this to 100 trailer, 30 door, and three zone records.
 export function buildShiftEvidence(
-  scenario: Scenario, mode: PlanMode, floorPlan: FloorPlan = getBaselineFloorPlan(scenario), pickup: PickupWindow = 'current',
+  scenario: Scenario, mode: PlanMode, floorPlan: FloorPlan = getBaselineFloorPlan(scenario), pickup: PickupWindow = 'current', question = '',
 ): ShiftEvidence[] {
   const refs = safeReferences(scenario);
   const evaluation = evaluate(scenario, mode);
@@ -82,6 +115,7 @@ export function buildShiftEvidence(
     const location = trailer.currentDoorId ? `At door ${refs.door(trailer.currentDoorId)}` : stage[trailer.status];
     const lines = [`${location}. Arrival ${clock(trailer.arrivalMinute)}. ${trailer.handling} handling. ${trailer.packageCount} total; current pickup ${trailer.currentUnits}, next pickup ${trailer.nextUnits}.`];
     if (trailer.hold) lines.push('Planning hold.');
+    if (trailer.handling === 'crossdock') lines.push('Crossdock transfer bypasses the sorter.');
     lines.push(trailer.plannedDoorId ? `Preassigned ${refs.door(trailer.plannedDoorId)}.` : 'No preassigned door.');
     if (decision.kind === 'proposal') lines.push(`Proposed ${refs.door(decision.doorId)}; compatible, enabled and physically empty.`);
     if (decision.kind === 'conditional') lines.push(`Conditional target ${refs.door(decision.doorId)}: ${decision.label}. Cannot assign now.`);
@@ -101,12 +135,13 @@ export function buildShiftEvidence(
       `${door.enabled ? 'Enabled' : 'Disabled'}. ${door.zoneId ? refs.zone(door.zoneId) : 'Transfer door'}. Handling: ${door.allowedHandling.join(', ')}. Occupants: ${list(occupants.map(load => load.id))}. Preassigned: ${list(prior.map(load => load.id))}. Executable proposal: ${list(proposals.map(rec => rec.trailerId))}.`);
   }
 
+  evidence.push(...chuteEvidence(scenario, refs, question));
   const floor = evaluateSortFloor(scenario, floorPlan);
   const excluded = floor.excluded;
   add('sort-floor', 'Sort floor forecast', `${clock(scenario.nowMinute)} to ${clock(floor.endMinute)} forecast for ${floor.minutes} minutes, ${floor.packages} mapped packages. Baseline shortfall ${floor.baseGap}; selected plan shortfall ${floor.gap}. Shortfall sums unmet demand per zone. Excluded packages: held ${excluded.held}, transfer ${excluded.transfer}, unmapped ${excluded.unmapped}, stale ${excluded.stale}. Resource transfers are what-if forecasts.`);
   for (const row of floor.zones) {
     const capacity = row.proposed;
-    add(`zone-${row.zone}`, refs.zone(row.zone), `Forecast demand ${row.packages} = ${row.onSite} on site + ${row.expected} expected. Selected plan: ${floorPlan.chutes[row.zone]} chutes (capacity ${capacity.chuteLimit}), ${floorPlan.crew[row.zone]} crew (capacity ${capacity.crewLimit}). Effective capacity ${capacity.units}, limiting resource ${capacity.limitingResource}, shortfall ${row.gap}. Baseline capacity ${row.baseline.units}, shortfall ${row.baseGap}. Package sizes: compact ${row.sizes.compact}, standard ${row.sizes.standard}, bulky ${row.sizes.bulky}, unknown size ${row.unknownSize}.`);
+    add(`zone-${row.zone}`, refs.zone(row.zone), `Forecast demand ${row.packages} = ${row.onSite} on site + ${row.expected} expected. Selected plan: ${floorPlan.chutes[row.zone]} staffed positions (capacity ${capacity.chuteLimit}), ${floorPlan.crew[row.zone]} crew (capacity ${capacity.crewLimit}). Effective capacity ${capacity.units}, limiting resource ${capacity.limitingResource}, shortfall ${row.gap}. Baseline capacity ${row.baseline.units}, shortfall ${row.baseGap}. Package sizes: compact ${row.sizes.compact}, standard ${row.sizes.standard}, bulky ${row.sizes.bulky}, unknown size ${row.unknownSize}.`);
   }
   let best: { gap: number; text: string } | undefined;
   for (const resource of ['chutes', 'crew'] as const) {
@@ -117,14 +152,14 @@ export function buildShiftEvidence(
         const candidate = evaluateSortFloor(scenario, moveFloorResource(floorPlan, resource, from, to));
         const destination = candidate.zones.find(row => row.zone === to)!;
         const origin = candidate.zones.find(row => row.zone === from)!;
-        const unit = resource === 'chutes' ? 'chute' : 'crew member';
+        const unit = resource === 'chutes' ? 'staffed position' : 'crew member';
         const text = `Move one ${unit} from ${refs.zone(from)} to ${refs.zone(to)} in the selected plan: forecast total shortfall changes from ${floor.gap} to ${candidate.gap} packages. ${refs.zone(to)} then has capacity ${destination.proposed.units}, limiting resource ${destination.proposed.limitingResource}, shortfall ${destination.gap}; ${refs.zone(from)} has shortfall ${origin.gap}.`;
         add(`move-${resource}-${from}-${to}`, `${refs.zone(from)} to ${refs.zone(to)} · ${unit}`, text);
         if (candidate.gap < (best?.gap ?? floor.gap)) best = { gap: candidate.gap, text };
       }
     }
   }
-  add('best-transfer', 'Best single transfer', best ? `${best.text} This is a best single transfer by total shortfall; another move may tie.` : 'No single available chute or crew transfer lowers the total shortfall under the selected plan.');
+  add('best-transfer', 'Best single transfer', best ? `${best.text} This is a best single transfer by total shortfall; another move may tie.` : 'No single available staffed position or crew transfer lowers the total shortfall under the selected plan.');
 
   const record = currentShiftRecord(scenario);
   if (!record) add('shift-record', 'Shift record', 'No shift record available at this clock time. Recorded output and first-pass yield are unknown.');

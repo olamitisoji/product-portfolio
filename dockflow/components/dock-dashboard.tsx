@@ -5,6 +5,7 @@ import { Box, ChevronDown, FileStack, FolderClosed, Layers3, Minus, PanelRight, 
 import { advanceClock, applyAssignment, buildLoadDoorBoard, completeTrailer, evaluate, exportScenarioCsv, feasibleDoors, parseScenario, refreshSyntheticProfiles } from "@/lib/dock-engine";
 import { VolumeProfile } from "@/components/volume-profile";
 import { createScenario } from "@/lib/dock-fixtures";
+import { ChuteMap } from "@/components/chute-map";
 import { LoadDoorBoard, warningNames } from "@/components/load-door-board";
 import { ShiftPriorityBoard } from "@/components/shift-priority-board";
 import { SortFloorBoard } from "@/components/sort-floor-board";
@@ -19,6 +20,11 @@ import type { AuditEvent, PlanMode, Preset, Scenario } from "@/lib/dock-types";
 type View = "overview" | "priorities" | "queue" | "doors" | "floor" | "assumptions";
 type Session = { scenario: Scenario; audit: AuditEvent[] };
 const STORAGE_KEY = "dockflow.synthetic.v1";
+// A shared floor-map example has its own tab session, separate from the saved shift.
+function shiftStorage() {
+  return new URLSearchParams(window.location.search).get("example") === "chutes"
+    ? window.sessionStorage : window.localStorage;
+}
 const number = (value: number) => value.toLocaleString("en-US");
 const time = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 const label = (value: string) => value === "at_door" ? "At door" : value.charAt(0).toUpperCase() + value.slice(1);
@@ -114,7 +120,7 @@ export default function DockDashboard() {
     // Defer browser-only state until the server-rendered first view has hydrated.
     const timer = window.setTimeout(() => {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = shiftStorage().getItem(STORAGE_KEY);
         if (saved) {
           if (saved.length > 2_000_000) throw new Error("Saved snapshot is too large.");
           const restored = readSession(JSON.parse(saved));
@@ -132,7 +138,7 @@ export default function DockDashboard() {
 
   useEffect(() => {
     if (!ready) return;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(session)); }
+    try { shiftStorage().setItem(STORAGE_KEY, JSON.stringify(session)); }
     catch {
       const timer = window.setTimeout(() => setError("Browser storage is unavailable. Export JSON to keep this snapshot."), 0);
       return () => window.clearTimeout(timer);
@@ -274,6 +280,11 @@ export default function DockDashboard() {
   };
 
   const volume = scenario.volumePlan;
+  const hasChuteRoutes = scenario.trailers.some(trailer => trailer.chuteRoutes !== undefined);
+  const chuteMap = <>
+    {!hasChuteRoutes && <div className="legacy-volume"><span>Saved shift · chute routes unavailable</span><a className="button" href="?example=chutes#chute-map">Open chute map example</a></div>}
+    <div id="chute-map"><ChuteMap key={floorRevision} scenario={scenario} selectedId={selectedId} onSelect={inspect} onInspect={openTrailer} /></div>
+  </>;
   const stages = [["yard", "In yard"], ["at_door", "At door"], ["expected", "Expected"], ["complete", "Completed"]] as const;
   const showProperties = view === "overview" && propertiesVisible && !!selectedRow;
   const dueOnSite = currentPickup.due ? (currentPickup.stageDue.yard + currentPickup.stageDue.at_door) / currentPickup.due * 100 : 0;
@@ -283,7 +294,7 @@ export default function DockDashboard() {
   return <div className="shift-studio">
     <header className="studio-header">
       <a className="studio-brand" href="#main" onClick={() => setView("overview")}>
-        <span className="sortward-symbol" aria-hidden="true"><i /><i /><i /></span>Sortward
+        Sortward
       </a>
       <div className="studio-file"><FileStack size={17} aria-hidden="true" /><strong>{facility}</strong><ChevronRight size={13} aria-hidden="true" /><span>Shift workspace</span></div>
       <div className="studio-command"><span className="simulation-tag"><i />Simulation</span><ShiftAnalyst scenario={scenario} mode={mode} pickup={pickup} floorPlan={floorPlan} selectedId={selectedId} onInspect={openTrailer} /></div>
@@ -328,7 +339,7 @@ export default function DockDashboard() {
         </div>
         {(error || notice) && !drawerOpen && <div role="status" className={`notice ${error ? "notice-error" : ""}`}><span>{error || notice}</span></div>}
         {view === "overview" && <>
-          {volume ? <VolumeProfile plan={volume} activePackages={result.metrics.totalPackages} reports={scenario.shiftReports} nowMinute={scenario.nowMinute} /> : <div className="legacy-volume"><span>Saved shift · facility volume unspecified</span><button className="button" onClick={() => reset(true)}>Open 600,000 package weekly example</button></div>}
+          {volume ? <VolumeProfile plan={volume} activePackages={result.metrics.totalPackages} reports={scenario.shiftReports} nowMinute={scenario.nowMinute} /> : <div className="legacy-volume"><span>Saved shift · facility volume unspecified</span>{hasChuteRoutes && <button className="button" onClick={() => reset(true)}>Open 600,000 package weekly example</button>}</div>}
           <div className="shift-metrics" aria-label="Shift decisions">
             <button className="metric-pickup" onClick={() => setView("priorities")}>
               <span className="metric-title">Due by {time(scenario.currentDeadlineMinute)}</span>
@@ -346,10 +357,11 @@ export default function DockDashboard() {
               <span className="metric-bars" title="Forecast demand by zone" aria-hidden="true">{floorBaseline.zones.map(zone => <i key={zone.zone} style={{height:`${Math.max(5, zone.packages / maxZoneDemand * 100)}%`}} />)}</span>
             </button>
           </div>
+          {chuteMap}
           <LoadDoorBoard scenario={scenario} rows={loadRows} selectedId={selectedId} onInspect={selectOnCanvas} />
           <div className="overview-grid">
             <section className="panel demand">
-              <div className="panel-heading"><h2>Destination demand</h2><span className="legend"><i />At door <i />Yard <i />Expected</span></div>
+              <div className="panel-heading"><h2>Zone capacity</h2><span className="legend"><i />At door <i />Yard <i />Expected</span></div>
               <div className="zone-list">{result.zones.map((zone) =>
                 <div className="zone-row" key={zone.zoneId}>
                   <div className="zone-name"><span>{zone.zoneId}</span><div><strong>{scenario.zones.find((item) => item.id === zone.zoneId)?.name}</strong><small>{number(zone.totalUnits)} of {number(zone.capacityUnits)} capacity</small></div></div>
@@ -366,7 +378,7 @@ export default function DockDashboard() {
           </div>
         </>}
         {view === "priorities" && <ShiftPriorityBoard window={pickup} setWindow={setPickup} scenario={scenario} evaluation={result} onInspect={openTrailer} />}
-        <div hidden={view !== "floor"} key={floorRevision}><SortFloorBoard scenario={scenario} plan={floorPlan} setPlan={setFloorPlan} /></div>
+        <div hidden={view !== "floor"} key={floorRevision}>{view === "floor" && chuteMap}<SortFloorBoard scenario={scenario} plan={floorPlan} setPlan={setFloorPlan} /></div>
         {view === "queue" && queue}
         {view === "doors" && doorPlan}
         {view === "assumptions" && <div className="assumptions-grid">

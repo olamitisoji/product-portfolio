@@ -82,7 +82,7 @@ export function ShiftAnalyst({ scenario, mode, floorPlan, pickup, selectedId, on
   }
   const trailerQuestion = selectedId && /^TR-1(?:0[1-9]|1[0-2])$/.test(selectedId)
     ? `Which door fits ${selectedId}, and why?` : "Which door assignments need review?";
-  const starters = ["Which yard trailer should we unload next?", trailerQuestion, "What would ease the next sort bottleneck?"];
+  const starters = ["Which yard trailer should we unload next?", trailerQuestion, "Which chute has the most inbound packages?"];
 
   return <>
     <button type="button" className="ask-trigger" onClick={open}><Sparkles size={15} aria-hidden="true" />Ask Sortward</button>

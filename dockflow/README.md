@@ -14,13 +14,14 @@ The fictional facility plans for about 600,000 packages per week. A seven-day sc
 2. Switch pickup windows to see due packages broken out by trailers on a door, in the yard and still expected. Advance the simulated clock to see arrival and priority changes.
 3. Inspect a trailer whose proposed door differs from the preassignment. A waiting trailer can receive an open, compatible door. An expected load or a trailer waiting for a compatible door to clear can have a planning target for later review.
 4. Accept a simulated assignment. Its door becomes occupied and the heatmap updates. Mark the trailer unloaded to release the door, or use Undo to return to the previous state.
-5. Open **Sort floor** to see where the next hour’s freight exceeds chute or crew capacity. Move a chute or a crew member between destinations and compare the remaining shortfall.
+5. Inspect a destination chute to see how many packages are routed there and which trailers contribute them. Each of the three zones has 200 fixed physical destinations in the simulator. The fictional manifests identify freight headed for the sorter and separate crossdock transfers that bypass it.
+6. Open **Sort floor** to see where the next hour’s freight exceeds the staffed processing capacity. Reallocate a staffed position or crew member between zones and compare the remaining shortfall.
 
 The package-size cells come from synthetic manifests. Older version 1 snapshots still open. When a snapshot lacks size detail, Sortward shows a dash. Loading a newly generated preset supplies a complete example.
 
 ## Ask about the shift
 
-Open **Ask Sortward** and ask which yard trailer should unload next, why a preassigned door is occupied, or whether moving a chute would ease the next bottleneck. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
+Open **Ask Sortward** and ask which yard trailer should unload next, which trailers are sending packages to B015, or whether another staffed position would ease a forecast shortfall. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
 
 The public demo shares 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
 

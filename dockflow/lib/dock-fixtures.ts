@@ -1,5 +1,32 @@
+import { CHUTES_PER_ZONE, chuteId } from './chute-routing.ts';
 import { DEFAULT_VOLUME_PLAN, getVolumeTargets } from './volume-plan.ts';
 import type { Handling, Preset, Scenario, ShiftReport, Trailer, ZoneId } from './dock-types.ts';
+
+// Each manifest's leading routes are shared with other loads in its synthetic group.
+function seedChuteRoutes(trailer: Trailer, seed: number, index: number) {
+  const routes: Record<string, number> = {};
+  const weights = [21, 15, 10, 9, 7, 6, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1];
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  const zones: ZoneId[] = ['A', 'B', 'C'];
+  for (const [zoneIndex, zone] of zones.entries()) {
+    const packages = trailer.zoneUnits[zone];
+    const bank = ((seed % CHUTES_PER_ZONE) + zoneIndex * 47 + (index % 4) * 39) % CHUTES_PER_ZONE;
+    const allocations = weights.map((weight, rank) => {
+      // A common bank concentrates demand. The tail fans out to trailer-specific destinations.
+      const position = rank < 6 ? bank + rank : bank + 11 + index * 17 + rank * 13;
+      const id = chuteId(zone, position % CHUTES_PER_ZONE + 1);
+      const numerator = packages * weight;
+      return { id, packages: Math.floor(numerator / weightTotal), remainder: numerator % weightTotal };
+    });
+    const leftover = packages - allocations.reduce((sum, item) => sum + item.packages, 0);
+    allocations.sort((a, b) => b.remainder - a.remainder);
+    allocations.forEach((allocation, order) => {
+      const count = allocation.packages + Number(order < leftover);
+      if (count) routes[allocation.id] = (routes[allocation.id] ?? 0) + count;
+    });
+  }
+  return routes;
+}
 
 // Every name, location, count and policy in these presets is fictional.
 export function createScenario(preset: Preset = 'balanced', seed: number = 42): Scenario {
@@ -52,8 +79,9 @@ export function createScenario(preset: Preset = 'balanced', seed: number = 42): 
   const half = Math.floor(tied.packageCount / 2);
   tied.zoneUnits = { A: half, B: half, C: tied.packageCount - 2 * half };
   // Fictional manifest counts reconcile to each destination, including mixed loads.
-  for (const trailer of trailers) {
+  for (const [index, trailer] of trailers.entries()) {
     if (!trailer.profileKnown) continue;
+    if (trailer.handling !== 'crossdock') trailer.chuteRoutes = seedChuteRoutes(trailer, seed, index);
     const split = (units: number) => {
       const compact = Math.floor(units * (0.15 + random() * 0.5));
       const standard = Math.floor((units - compact) * (0.35 + random() * 0.5));

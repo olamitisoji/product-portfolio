@@ -37,7 +37,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
       </div>
       <div className="floor-table-wrap" tabIndex={0} role="region" aria-label="Destination capacity comparison">
         <table className="floor-table">
-          <thead><tr><th scope="col">Destination</th><th scope="col">On site</th><th scope="col">Expected</th><th scope="col">Chutes</th><th scope="col">People</th><th scope="col">Baseline capacity</th><th scope="col">What-if capacity</th><th scope="col">Shortfall</th></tr></thead>
+          <thead><tr><th scope="col">Destination</th><th scope="col">On site</th><th scope="col">Expected</th><th scope="col">Staffed positions</th><th scope="col">Crew</th><th scope="col">Baseline capacity</th><th scope="col">What-if capacity</th><th scope="col">Shortfall</th></tr></thead>
           <tbody>{floor.zones.map(z => <tr key={z.zone}>
             <th scope="row">{z.name}</th><td>{format(z.onSite)}</td><td>{format(z.expected)}</td>
             <td>{plan.chutes[z.zone]}</td><td>{plan.crew[z.zone]}</td>
@@ -47,13 +47,13 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         </table>
       </div>
       <form className="floor-transfer" onSubmit={e => { e.preventDefault(); if (canMove) setPlan(current => moveFloorResource(current, resource, from, to)); }}>
-        <label>Move one<select value={resource} onChange={e => setResource(e.target.value as FloorResource)}><option value="chutes">Chute</option><option value="crew">Crew member</option></select></label>
+        <label>Reallocate one<select value={resource} onChange={e => setResource(e.target.value as FloorResource)}><option value="chutes">Staffed position</option><option value="crew">Crew member</option></select></label>
         <label>From<select value={from} onChange={e => setFrom(e.target.value as ZoneId)}>{scenario.zones.map(z => <option key={z.id} value={z.id}>{z.name} ({plan[resource][z.id]})</option>)}</select></label>
         <label>To<select value={to} onChange={e => setTo(e.target.value as ZoneId)}>{scenario.zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
         <button className="button primary" type="submit" disabled={!canMove}>Preview move</button>
         <button className="button" type="button" disabled={!changed} onClick={() => setPlan(baseline)}>Restore baseline</button>
       </form>
-      {!canMove && <p className="floor-action-status" role="status">{from === to ? "Choose two different destinations." : `No ${resource === "chutes" ? "chutes" : "crew members"} available to move from this zone.`}</p>}
+      {!canMove && <p className="floor-action-status" role="status">{from === to ? "Choose two different destinations." : `No ${resource === "chutes" ? "staffed positions" : "crew members"} available in this zone.`}</p>}
       <div className="floor-disclosures">
         <details>
           <summary>Forecast exclusions · {format(held + transfer + unmapped + stale)} packages</summary>
@@ -66,7 +66,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         </details>
         <details>
           <summary>Capacity assumptions</summary>
-          <p>Demand includes on-site packages and arrivals expected by {time(floor.endMinute)}. The simulated floor has {Object.values(baseline.chutes).reduce((a, b) => a + b, 0)} chutes and {Object.values(baseline.crew).reduce((a, b) => a + b, 0)} crew. Each zone is limited to {CHUTE_RATE} packages per chute or {CREW_RATE} per person per hour, whichever binds first.</p>
+          <p>The plan allocates {Object.values(baseline.chutes).reduce((a, b) => a + b, 0)} staffed processing positions and {Object.values(baseline.crew).reduce((a, b) => a + b, 0)} crew members across three zones. Each position handles {CHUTE_RATE} packages per hour and each person can process {CREW_RATE}. The lower of those two zone totals sets its capacity.</p>
         </details>
       </div>
     </section>

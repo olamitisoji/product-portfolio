@@ -8,11 +8,13 @@ The three destination cells count packages on that trailer. A darker cell means 
 
 A trailer can be at a door, in the yard, expected or completed. Completing an unload moves the trailer into the completed group. The row retains its original manifest for inspection.
 
+Look up a chute such as B015 to see which active trailers have packages scheduled for that destination. A count of zero means no packages in the available routes name that chute. Packages headed for the sorter with missing destination details stay in the unmapped total. Crossdock freight goes directly to transfer and appears in the bypass total. Arrival at a chute would require a scan, which this simulation does not record.
+
 ## Choose a pickup window
 
 The pickup board answers which freight is due and whether it has arrived. Selecting the next window uses that window’s package counts. The view groups current backlog into docked, yard and expected work. The order changes as time runs short. The source for this fictional policy is [shift-priorities.ts](lib/shift-priorities.ts).
 
-Open **Sort floor** to see which destinations can absorb the next hour’s forecast. A zone with plenty of crew can still run short of chutes. Move one chute or one crew member between zones and compare their unserved package counts. The calculation lives in [sort-floor.ts](lib/sort-floor.ts).
+Open **Sort floor** to see which zones can absorb the next hour’s forecast. A zone with enough crew can still run short of staffed processing positions. Reallocate a position or a crew member and compare the forecast shortfall in both zones. Physical chute locations stay fixed. The calculation lives in [sort-floor.ts](lib/sort-floor.ts).
 
 ## Review a door decision
 

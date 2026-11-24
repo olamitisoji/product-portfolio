@@ -1,3 +1,4 @@
+import { CHUTES_PER_ZONE, chuteZone } from './chute-routing.ts';
 import type {
   ActionResult, Door, DoorCandidate, Evaluation, Handling, PackageMix, ParseResult, PlanMode,
   PriorityDetail, Recommendation, Scenario, ShiftReport, Trailer, TrailerStatus, VolumePlan, Warning, Zone, ZoneId,
@@ -22,6 +23,7 @@ function cloneScenario(scenario: Scenario): Scenario {
     trailers: scenario.trailers.map((trailer) => ({
       ...trailer,
       zoneUnits: { ...trailer.zoneUnits },
+      ...(trailer.chuteRoutes && { chuteRoutes: { ...trailer.chuteRoutes } }),
       ...(trailer.packageMix && { packageMix: structuredClone(trailer.packageMix) }),
     })),
   };
@@ -515,6 +517,23 @@ export function parseScenario(input: unknown): ParseResult {
         packageMix = { A: sizes('A'), B: sizes('B'), C: sizes('C') };
       }
       const profileKnown = bool(own(load, 'profileKnown'), `${path} profileKnown`);
+      let chuteRoutes: Record<string, number> | undefined;
+      if (hasOwn(load, 'chuteRoutes')) {
+        const routes = record(own(load, 'chuteRoutes'), `${path} chute routes`);
+        const routeIds = Object.keys(routes);
+        const zoneTotals = { A: 0, B: 0, C: 0 };
+        chuteRoutes = {};
+        if (!profileKnown) errors.push(`${path} cannot report chute routes with an unknown profile.`);
+        if (routeIds.length > ZONES.length * CHUTES_PER_ZONE) errors.push(`${path} has too many chute routes.`);
+        for (const id of routeIds.slice(0, ZONES.length * CHUTES_PER_ZONE)) {
+          const zone = chuteZone(id);
+          if (!zone) { errors.push(`${path} references an unknown chute.`); continue; }
+          const count = integer(own(routes, id), `${path} chute ${id} packages`);
+          zoneTotals[zone] += count;
+          chuteRoutes[id] = count;
+        }
+        if (ZONES.some(zone => zoneTotals[zone] !== zoneUnits[zone])) errors.push(`${path} chute routes must match each zone's package count.`);
+      }
       const profileUpdatedMinute = own(load, 'profileUpdatedMinute') === null ? null : integer(own(load, 'profileUpdatedMinute'), `${path} profile timestamp`, 1440);
       const packageCount = integer(own(load, 'packageCount'), `${path} package count`);
       const currentUnits = integer(own(load, 'currentUnits'), `${path} current deadline units`);
@@ -532,7 +551,7 @@ export function parseScenario(input: unknown): ParseResult {
         id: identifier(own(load, 'id'), `${path} ID`), carrier: text(own(load, 'carrier'), `${path} carrier`),
         status, arrivalMinute: integer(own(load, 'arrivalMinute'), `${path} arrival`, 1440),
         handling: enumeration(own(load, 'handling'), HANDLING, `${path} handling`), packageCount, currentUnits, nextUnits,
-        zoneUnits, ...(packageMix && { packageMix }), profileKnown, profileUpdatedMinute, hold: bool(own(load, 'hold'), `${path} hold`),
+        zoneUnits, ...(packageMix && { packageMix }), ...(chuteRoutes && { chuteRoutes }), profileKnown, profileUpdatedMinute, hold: bool(own(load, 'hold'), `${path} hold`),
         currentDoorId, plannedDoorId: nullableDoor('plannedDoorId'),
       };
     });

@@ -20,6 +20,7 @@ export interface Trailer {
   nextUnits: number;
   zoneUnits: Record<ZoneId, number>;
   packageMix?: PackageMix;
+  chuteRoutes?: Record<string, number>;
   profileKnown: boolean;
   profileUpdatedMinute: number | null;
   hold: boolean;

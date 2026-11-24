@@ -1,6 +1,7 @@
 import type { PackageSize, Scenario, ShiftReport, ZoneId } from './dock-types.ts';
 
 type ZoneCounts = Record<ZoneId, number>;
+// The existing floor-plan field "chutes" counts staffed processing positions.
 export type FloorResource = 'chutes' | 'crew';
 export type FloorPlan = Record<FloorResource, ZoneCounts>;
 
@@ -34,7 +35,7 @@ export function moveFloorResource(plan: FloorPlan, resource: FloorResource, from
 function floorCapacity(plan: FloorPlan, zone: ZoneId, minutes: number) {
   const chuteLimit = Math.floor(plan.chutes[zone] * CHUTE_RATE * minutes / 60);
   const crewLimit = Math.floor(plan.crew[zone] * CREW_RATE * minutes / 60);
-  const limitingResource = chuteLimit === crewLimit ? 'Chutes and crew' : chuteLimit < crewLimit ? 'Chutes' : 'Crew';
+  const limitingResource = chuteLimit === crewLimit ? 'Staffed positions and crew' : chuteLimit < crewLimit ? 'Staffed positions' : 'Crew';
   return { units: Math.min(chuteLimit, crewLimit), chuteLimit, crewLimit, limitingResource };
 }
 
