@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Evaluation, Scenario } from "@/lib/dock-types";
 import {
   planPickupWindow, type ActiveStage, type PickupLoad, type PickupWindow,
@@ -13,6 +13,8 @@ const formatTime = (minutes: number) =>
 const stageName: Record<ActiveStage, string> = { yard: "In yard", at_door: "At a door", expected: "Expected" };
 
 type BoardProps = {
+  stage: ActiveStage | "all";
+  setStage: (stage: ActiveStage | "all") => void;
   window: PickupWindow;
   setWindow: (window: PickupWindow) => void;
   scenario: Scenario;
@@ -26,8 +28,7 @@ function stageDetail(row: PickupLoad, now: number) {
   return elapsed >= 0 ? `Arrived ${elapsed} min ago` : `Check arrival ${formatTime(row.trailer.arrivalMinute)}`;
 }
 
-export function ShiftPriorityBoard({ scenario, evaluation, onInspect, window, setWindow }: BoardProps) {
-  const [stage, setStage] = useState<ActiveStage | "all">("all");
+export function ShiftPriorityBoard({ scenario, evaluation, onInspect, window, setWindow, stage, setStage }: BoardProps) {
   const plan = useMemo(() => planPickupWindow(scenario, window), [scenario, window]);
   const byTrailer = useMemo(
     () => new Map(evaluation.recommendations.map((rec) => [rec.trailerId, rec])),

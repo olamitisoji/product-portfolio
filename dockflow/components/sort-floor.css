@@ -3,6 +3,7 @@
 .floor-board .floor-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem 1rem; padding: 1.1rem 1.25rem; }
 .floor-board .floor-header p, .floor-board .floor-record small, .floor-board .floor-disclosures p { color: #586171; font-size: .82rem; }
 .floor-board .floor-header p { margin-top: .25rem; }
+.floor-board .floor-coverage { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; padding: .7rem 1.25rem; background: #f4f2e9; color: #564c36; font-size: .83rem; }
 .floor-board .floor-window { padding: .32rem .6rem; color: #45516a; background: #f4f5fa; border-radius: .4rem; font-size: .8rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .floor-board .floor-summary, .floor-board .floor-record { display: grid; margin: 0; font-variant-numeric: tabular-nums; }
 .floor-board .floor-summary { grid-template-columns: repeat(3,minmax(0,1fr)); border-block: 1px solid #dfe3da; }

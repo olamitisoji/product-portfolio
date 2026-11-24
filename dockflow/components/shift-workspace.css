@@ -1,15 +1,67 @@
-.ask-trigger{color:#fff;background:#244f4c;border:1px solid #244f4c;border-radius:6px;padding:8px 13px;white-space:nowrap}
-.ask-trigger:hover,.analyst-form button:hover:enabled{background:#315954}
-.analyst-dialog{position:fixed;inset:0;margin:auto;width:min(490px,calc(100vw - 24px));max-height:85dvh;padding:0;overflow:auto;border:1px solid #c7cedb;color:#252c3a;background:white;border-radius:12px;box-shadow:0 24px 84px #17213933}
-.analyst-dialog::backdrop{background:#17213966}
-.analyst-head,.analyst-head>div{display:flex;align-items:center;gap:9px}.analyst-head{justify-content:space-between;border-bottom:1px solid #e1e5ed;padding:14px 18px;color:#315954}
-.analyst-head h2{font-size:17px;color:#193c3d;letter-spacing:-.025em;margin:0}
-.analyst-close{color:#576176;padding:4px;background:transparent;border:none;cursor:pointer}
-.analyst-body{padding:18px}.analyst-starters{display:grid;gap:6px;margin-bottom:15px}.analyst-starters button{font:inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;text-align:left;gap:9px;padding:10px 12px;background:#f6f7f1;color:#334a44;border:1px solid #dfe4db;border-radius:5px;cursor:pointer}
-.analyst-starters button:hover{background:#edf2e9}
-.analyst-pending,.analyst-error,.analyst-question,.analyst-answer,.analyst-evidence p{font-size:14px;line-height:1.5}
-.analyst-question{font-weight:650;margin:0 0 8px}.analyst-answer{white-space:pre-line;margin:0 0 15px}.analyst-error{color:#8d4515}
-.analyst-evidence{border-top:1px solid #dfe4db;padding-top:14px;margin-bottom:14px}.analyst-evidence h3{margin-bottom:5px}
-.analyst-evidence details{font-size:12px;border-bottom:1px solid #eaedf4;padding:6px 0}.analyst-evidence summary{cursor:pointer;color:#245a52;font-weight:580}.analyst-evidence p{font-size:12px;margin:6px 0}.analyst-evidence button{display:inline-flex;align-items:center;background:none;border:0;padding:2px 0;color:#245a52;font-weight:600;cursor:pointer}
-.analyst-form{display:flex;align-items:flex-end;gap:8px;border:1px solid #bdc6da;border-radius:7px;padding:9px}.analyst-form:focus-within{outline:2px solid #82a39a}.analyst-form textarea{font:inherit;font-size:14px;resize:vertical;min-width:0;flex:1;background:white;border:0;padding:2px;color:#193c3d;outline:none;max-height:150px}.analyst-form button{display:grid;place-items:center;background:#244f4c;color:white;border:0;border-radius:5px;width:31px;height:31px;cursor:pointer}.analyst-form button:disabled{background:#d0d5e1;color:#465169;cursor:default}
-.analyst-limit{display:block;margin-top:9px;color:#687284;font-size:11px}.analyst-form .sr-only{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.ask-trigger {
+  color: #fff; background: #244f4c; border: 1px solid #244f4c;
+  border-radius: 6px; padding: 8px 13px; white-space: nowrap;
+}
+.ask-trigger:hover, .analyst-form button:hover:enabled { background: #315954; }
+.analyst-dialog {
+  position: fixed; inset: 0; margin: auto; padding: 0;
+  width: min(530px, calc(100vw - 24px)); max-height: min(82dvh, 780px);
+  overflow: hidden; border: 1px solid #cbd6cd; border-radius: 10px;
+  color: #203936; background: #fcfbf7; box-shadow: 0 18px 75px #142e2940;
+}
+.analyst-dialog[open] { display: flex; flex-direction: column; }
+.analyst-dialog::backdrop { background: #172d2b66; }
+.analyst-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding: 17px 20px 13px; border-bottom: 1px solid #dce1d7;
+}
+.analyst-head h2 { margin: 0; font: 500 26px/1.1 Georgia, serif; color: #183c39; letter-spacing: -.04em; }
+.analyst-head p, .analyst-compose small { margin: 5px 0 0; color: #54665d; font-size: 12px; }
+.analyst-actions { display: flex; gap: 2px; }
+.analyst-actions button {
+  display: grid; place-items: center; width: 34px; height: 34px;
+  background: transparent; border: 0; border-radius: 5px; color: #4c6057;
+}
+.analyst-actions button:enabled:hover { background: #e8ede4; }
+.analyst-scroll { min-height: 0; padding: 17px 20px; overflow: auto; overscroll-behavior: contain; }
+.analyst-starters { display: grid; gap: 7px; }
+.analyst-starters button {
+  display: flex; text-align: left; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border: 1px solid #d9e0d3; border-radius: 4px;
+  color: #23483d; background: #f1f4eb; font-size: 14px; line-height: 1.45;
+}
+.analyst-starters button:hover { background: #e7eee2; }
+.analyst-thread article + article { margin-top: 18px; border-top: 1px solid #dce1d7; padding-top: 15px; }
+.analyst-thread:not(:empty) + div { margin-top: 15px; }
+.analyst-question, .analyst-answer, .analyst-pending, .analyst-error { font-size: 14px; line-height: 1.55; }
+.analyst-question { margin: 0 0 8px; font-weight: 650; }
+.analyst-answer { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.analyst-pending { margin: 0; color: #54665d; }
+.analyst-error { margin-top: 12px; color: #8d4515; }
+.analyst-sources { margin-top: 9px; color: #4c6057; font-size: 12px; }
+.analyst-sources summary { width: fit-content; cursor: pointer; color: #245a52; font-weight: 600; }
+.analyst-sources section { border-left: 2px solid #ccd9cb; margin-top: 8px; padding-left: 9px; }
+.analyst-sources h3 { margin: 0; font-size: 13px; color: #365246; }
+.analyst-sources p { margin: 3px 0; line-height: 1.5; }
+.analyst-sources button { display: inline-flex; align-items: center; gap: 2px; min-height: 27px; background: none; border: 0; padding: 0; color: #245a52; font-weight: 600; }
+.analyst-compose { flex-shrink: 0; padding: 0 20px 14px; background: #fcfbf7; }
+.analyst-form {
+  display: flex; align-items: flex-end; gap: 8px; padding: 8px;
+  border: 1px solid #b1c2b7; border-radius: 6px; background: #fffefa;
+}
+.analyst-form:focus-within { outline: 2px solid #82a39a; outline-offset: 1px; }
+.analyst-form textarea {
+  min-width: 0; flex: 1; max-height: 95px; padding: 3px; resize: vertical;
+  font: inherit; font-size: 14px; color: #203936; background: transparent; border: 0; outline: 0;
+}
+.analyst-form button {
+  display: grid; place-items: center; width: 33px; height: 33px; border: 0;
+  border-radius: 4px; background: #244f4c; color: white;
+}
+.analyst-form button:disabled { background: #d8ded6; color: #576760; }
+.analyst-compose small { display: block; margin-top: 7px; font-size: 11px; }
+@media (max-width: 600px) {
+  .analyst-head, .analyst-scroll { padding: 14px; }
+  .analyst-compose { padding: 0 14px 12px; }
+  .analyst-form textarea { font-size: 16px; }
+}

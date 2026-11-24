@@ -61,7 +61,7 @@ test('worker sends only a question and calculated shift records, and resolves re
   assert.equal(call.payload.text.format.strict, true);
   assert.ok(call.payload.max_output_tokens <= 650);
   assert.equal(call.payload.tools, undefined);
-  assert.deepEqual(Object.keys(call.parsed).sort(), ['evidence', 'question']);
+  assert.deepEqual(Object.keys(call.parsed).sort(), ['evidence', 'priorEvidenceIds', 'priorQuestions', 'question']);
   assert.doesNotMatch(JSON.stringify(call.payload), /CUSTOMER_EMAIL_NOT_FOR_ANALYSIS|Juniper Freight|profileUpdatedMinute/);
   const json = await r.json();
   assert.equal(json.answer, 'Review the shift totals.');
@@ -113,7 +113,7 @@ test('the worker retrieves the requested physical chute without sending the mani
   const { citations } = await r.json();
   assert.equal(citations[0].id, 'chute-A199');
   const records = h.context.calls[0].parsed.evidence;
-  assert.ok(records.filter(row => row.id.startsWith('chute-')).length <= 5);
+  assert.ok(records.filter(row => row.id.startsWith('chute-')).length <= 7);
   assert.doesNotMatch(JSON.stringify(records), /chuteRoutes/);
 });
 
@@ -216,4 +216,32 @@ test('questions outside shift evidence get a consistent abstention without inven
   assert.deepEqual(result.citations, []);
   assert.doesNotMatch(result.answer, /arbitrary model prose/);
   assert.match(result.answer, /shift/i);
+});
+
+test('worker restores current source records for follow-ups and consumes no quota on malformed context', async t => {
+  const h = harness(t, () => success('chute-A121'));
+  const base = query();
+  const context = { view: 'overview', selectedTrailerId: 'TR-103', chute: { trailerId: 'TR-103', zoneId: 'A', chuteId: 'A121' } };
+  for (const fields of [
+    { context: { ...context, selectedTrailerId: 'custom' } },
+    { context: { view: 'overview', chute: { statuses: ['expected','expected'] } } },
+    { context: { view: 'floor', chute: { trailerId: 'TR-101', statuses: [] } } },
+    { context: { view: 'floor', chute: { zoneId:'B', chuteId:'A121' } } },
+    { context: { view:'queue', queue:{trailerIds:['TR-103'],search:'free-form query'} } },
+    { context: { view:'queue', queue:{trailerIds:['UNKNOWN']} } },
+    { context: { view:'priorities', pickupStage:'not-a-location' } },
+    { priorQuestions: [{ role:'assistant', content:'free text' }] },
+    { priorQuestions: Array(4).fill('too many') }, { priorEvidenceIds: Array(13).fill('shift') },
+  ]) assert.equal((await h.send(post({ ...base, ...fields }))).status, 400);
+  assert.equal(h.requests(), 0);
+  const priorQuestions = ['Compare B007 and A122', 'Which is larger?'];
+  const r = await h.send(post({ ...base, context, priorQuestions, priorEvidenceIds: ['chute-C015','obsolete'], question: 'What is feeding the selected chute?' }));
+  assert.equal(r.status, 200);
+  const payload = h.context.calls[0].parsed;
+  assert.deepEqual(payload.priorQuestions, priorQuestions);
+  assert.deepEqual(payload.priorEvidenceIds, ['chute-C015']);
+  assert.ok(payload.evidence.some(row => row.id === 'chute-C015'));
+  assert.ok(payload.evidence.some(row => row.id === 'chute-A121' && /127 packages/.test(row.text)));
+  assert.doesNotMatch(JSON.stringify(payload), /obsolete|chuteRoutes|Copperline Cargo/);
+  assert.equal((await r.json()).citations[0].id, 'chute-A121');
 });

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ListFilter, Maximize2, Route } from "lucide-react";
 import { buildChuteMap, CHUTES_PER_ZONE } from "@/lib/chute-routing";
+import type { AnalystChuteContext } from "@/lib/analyst-context";
 import type { Scenario, TrailerStatus, ZoneId } from "@/lib/dock-types";
 import "./chute-map.css";
 
@@ -32,7 +33,7 @@ function ZoneOverview({ zone, peak, onChoose }: {
   peak: number;
   onChoose: (zoneId: ZoneId, chute?: Chute) => void;
 }) {
-  return <button type="button" className="chute-zone-card" data-zone-card={zone.id} aria-label={`Explore ${zone.name}, ${zone.chutes.length} chutes`}
+  return <button type="button" className="chute-zone-card" data-zone-card={zone.id} aria-label={`Explore ${zone.name}, ${zone.chutes.length} chutes, ${count.format(zone.routedPackages)} routed packages`}
     onClick={event => {
       const target = event.target instanceof HTMLElement ? event.target.closest<HTMLElement>("[data-chute]") : null;
       onChoose(zone.id, target ? zone.chutes.find(chute => chute.id === target.dataset.chute) : undefined);
@@ -63,10 +64,11 @@ function ChuteDetail({ chute, onInspect }: { chute: Chute; onInspect: (id: strin
   </div>;
 }
 
-export function ChuteMap({ scenario, selectedId, onSelect, onInspect }: {
+export function ChuteMap({ scenario, selectedId, onSelect, onInspect, onContextChange }: {
   scenario: Scenario;
   selectedId?: string;
   onSelect: (id: string) => void;
+  onContextChange: (context: AnalystChuteContext) => void;
   onInspect: (id: string) => void;
 }) {
   const [scope, setScope] = useState<"all" | "selected">("all");
@@ -89,6 +91,12 @@ export function ChuteMap({ scenario, selectedId, onSelect, onInspect }: {
   const defaults = activeStates.length === statuses.length && activeStates.every(status => statuses.includes(status));
 
   const shownZone = map.routedPackages ? zone?.id : undefined;
+  const shownChute = shownZone ? chute?.id : undefined;
+  useEffect(() => {
+    const filter = trailerScope ? { trailerId: selectedId } : { statuses };
+    onContextChange({ ...filter, zoneId: shownZone, chuteId: shownChute });
+  }, [trailerScope, selectedId, statuses, shownZone, shownChute, onContextChange]);
+
   useEffect(() => {
     const previous = previousZone.current;
     if (previous === shownZone) return;

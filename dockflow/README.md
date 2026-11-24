@@ -21,7 +21,9 @@ The package-size cells come from synthetic manifests. Older version 1 snapshots 
 
 ## Ask about the shift
 
-Open **Ask Sortward** and ask which yard trailer should unload next, which trailers are sending packages to B015, or whether another staffed position would ease a forecast shortfall. The analyst sends the question and a bounded set of fictional shift facts to OpenAI. Expand its cited records to check the numbers. It reads the same pickup window and floor allocation you selected. A person approves each simulated move.
+Filter the heatmap to expected arrivals and open **Ask Sortward**. Ask which two chutes will receive the most freight, then ask which trailer feeds them. On **Sort floor**, ask which staffing change helps the most, how much shortfall remains and what missing data could change the decision.
+
+The analyst sends your question, bounded conversation references and records for the current view to OpenAI. Its answers can cite filtered manifests, pickup priorities, door alternatives and staffing projections. Expand a citation to inspect its source. Assignments and staffing changes stay under operator control.
 
 The public demo shares 30 provider calls per UTC day. A D1 database atomically reserves each call before it leaves the server. The secret stays on the server. Custom facility and trailer identities stay in the browser.
 

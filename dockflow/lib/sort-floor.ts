@@ -4,6 +4,7 @@ type ZoneCounts = Record<ZoneId, number>;
 // The existing floor-plan field "chutes" counts staffed processing positions.
 export type FloorResource = 'chutes' | 'crew';
 export type FloorPlan = Record<FloorResource, ZoneCounts>;
+type ForecastStatus = 'complete' | 'partial' | 'unavailable' | 'empty' | 'closed';
 
 // Invented resource pools and rates for a one-hour planning exercise.
 export const BASE_FLOOR_PLAN: FloorPlan = {
@@ -64,7 +65,7 @@ export function evaluateSortFloor(scenario: Scenario, plan: FloorPlan = getBasel
     sizes: { compact: 0, standard: 0, bulky: 0 } as Record<PackageSize, number>,
     unknownSize: 0,
   }));
-  for (const trailer of scenario.trailers) {
+  for (const trailer of minutes > 0 ? scenario.trailers : []) {
     if (trailer.status === 'complete') continue;
     if (trailer.status === 'expected' && trailer.arrivalMinute > endMinute) continue;
     if (trailer.handling === 'crossdock') { excluded.transfer += trailer.packageCount; continue; }
@@ -96,9 +97,15 @@ export function evaluateSortFloor(scenario: Scenario, plan: FloorPlan = getBasel
       gap: Math.max(0, packages - proposed.units),
     };
   });
+  const packages = zones.reduce((sum, z) => sum + z.packages, 0);
+  const missingPackages = excluded.stale + excluded.unmapped;
+  let status: ForecastStatus;
+  if (minutes === 0) status = 'closed';
+  else if (missingPackages > 0) status = packages > 0 ? 'partial' : 'unavailable';
+  else status = packages > 0 ? 'complete' : 'empty';
   return {
-    zones, excluded, endMinute, minutes,
-    packages: zones.reduce((sum, z) => sum + z.packages, 0),
+    zones, excluded, endMinute, minutes, packages,
+    coverage: { status, missingPackages },
     baseGap: zones.reduce((sum, z) => sum + z.baseGap, 0),
     gap: zones.reduce((sum, z) => sum + z.gap, 0),
   };

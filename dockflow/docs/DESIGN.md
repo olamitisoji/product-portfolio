@@ -46,7 +46,7 @@ The weekly facility scenario allocates 25 staffed processing positions and 22 cr
 
 ## Shift analyst
 
-The server first reconstructs trusted facts from the fictional scenario, selected pickup and proposed floor plan. It gives those records and the question to GPT-4.1 mini. The model writes an answer and selects record IDs from a strict schema. The server checks the IDs and attaches their original facts. This makes it possible to inspect an answer's sources. The operator retains control of every assignment. A valid citation alone cannot establish that every model claim is correct.
+The server rebuilds the facts for the active screen from the fictional manifest, map filters, pickup and proposed staffing. The OpenAI Responses API receives the operator’s question, recent questions and verified record references. It returns an answer and citation IDs using a structured response. The server resolves each citation to its underlying fact. The model can explain choices and constraints. The operator approves changes.
 
 For destination questions, the server provides active manifest coverage, crossdock bypass volume and the highest known chute volume in each zone. An exact chute ID in the question adds a record for that destination. Each chute record names up to three contributing trailers and reports its share of active sorter volume.
 

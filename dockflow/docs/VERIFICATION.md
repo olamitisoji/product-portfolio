@@ -1,6 +1,6 @@
 # Sortward verification
 
-Updated November 23, 2026. The simulator uses fictional trailers, manifests, shift counts and capacity assumptions.
+Reviewed November 23, 2026. The simulator uses fictional trailers, manifests, shift counts and capacity assumptions.
 
 ## Automated checks
 
@@ -29,6 +29,12 @@ The balanced example with seed 42 has 5,903 active packages. Its floor map shows
 
 The mobile check covered a zone's last bank, an empty chute and expected-only arrivals. The shared chute example uses tab storage, so exploring it preserves the browser's ordinary saved shift.
 
+## Product review
+
+The Expected-only map on the balanced shift has 745 packages. B090 leads with 107 assigned packages, followed by B091 with 76. Ask the analyst to compare those destinations, then ask which trailer contributes. Compare the cited records with the visible map. TR-109 supplies expected freight at this clock time.
+
+At 11:00, 4,410 packages have stale profiles and 338 have missing routing data. The next-hour forecast cannot give a shortfall until usable profiles return. On the overview, Central has 2,078 sorter-directed packages against a capacity of 2,500. The 375 Central packages on the crossdock trailer bypass the sorter.
+
 ## Scope of the evidence
 
-The simulator keeps assignments and history in the visitor's browser. Its results cannot establish real shifts' throughput, staffing needs, operating savings or a causal improvement in first-pass yield.
+The simulator tracks active inbound freight until the operator records the trailer as unloaded. Downstream work awaiting sort and scan-confirmed arrivals are outside the current model. The simulator keeps assignments and history in the visitor's browser. Its results cannot establish real shifts' throughput, staffing needs, operating savings or a causal improvement in first-pass yield.

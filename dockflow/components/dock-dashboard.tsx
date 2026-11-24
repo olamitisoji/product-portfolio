@@ -12,45 +12,18 @@ import { SortFloorBoard } from "@/components/sort-floor-board";
 import { ShiftAnalyst } from "@/components/shift-analyst";
 import { TrailerSummary } from "@/components/trailer-summary";
 import "./editor-canvas.css";
-import type { PickupWindow } from "@/lib/shift-priorities";
-import { getBaselineFloorPlan, evaluateSortFloor, type FloorPlan } from "@/lib/sort-floor";
+import type { AnalystChuteContext, AnalystContext } from "@/lib/analyst-context";
+import type { ActiveStage, PickupWindow } from "@/lib/shift-priorities";
+import { evaluateSortFloor, type FloorPlan } from "@/lib/sort-floor";
 import { planPickupWindow } from "@/lib/shift-priorities";
-import type { AuditEvent, PlanMode, Preset, Scenario } from "@/lib/dock-types";
+import { browserShiftStore, freshSession, readSession, serializeSession, SHIFT_KEY, type SaveIssue, type ShiftSession as Session, type ShiftStore } from "@/lib/shift-session";
+import type { PlanMode, Preset, Scenario } from "@/lib/dock-types";
 
-type View = "overview" | "priorities" | "queue" | "doors" | "floor" | "assumptions";
-type Session = { scenario: Scenario; audit: AuditEvent[] };
-const STORAGE_KEY = "dockflow.synthetic.v1";
-// A shared floor-map example has its own tab session, separate from the saved shift.
-function shiftStorage() {
-  return new URLSearchParams(window.location.search).get("example") === "chutes"
-    ? window.sessionStorage : window.localStorage;
-}
+type View = AnalystContext["view"];
 const number = (value: number) => value.toLocaleString("en-US");
 const time = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 const label = (value: string) => value === "at_door" ? "At door" : value.charAt(0).toUpperCase() + value.slice(1);
-const initial = (): Session => ({ scenario: createScenario(), audit: [] });
-
-// Files and browser storage are untrusted inputs: validate before using them.
-function readSession(value: unknown): Session {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Choose a synthetic Sortward JSON snapshot.");
-  const record = value as Record<string, unknown>;
-  const parsed = parseScenario(Object.hasOwn(record, "scenario") ? record.scenario : record);
-  if (!parsed.ok) throw new Error(parsed.errors.slice(0, 3).join(" "));
-  const sourceAudit = Object.hasOwn(record, "audit") ? record.audit : [];
-  if (!Array.isArray(sourceAudit) || sourceAudit.length > 1000) throw new Error("Snapshot audit must contain at most 1,000 events.");
-  const audit: AuditEvent[] = sourceAudit.map((raw) => {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Invalid audit event.");
-    const event = raw as Record<string, unknown>;
-    const fields = ["action", "trailerId", "doorId", "atMinute", "reason"];
-    if (!fields.every((key) => Object.hasOwn(event, key)) || !["assign", "complete"].includes(event.action as string)
-      || typeof event.trailerId !== "string" || !parsed.scenario.trailers.some((trailer) => trailer.id === event.trailerId)
-      || typeof event.doorId !== "string" || !parsed.scenario.doors.some((door) => door.id === event.doorId)
-      || !Number.isInteger(event.atMinute) || (event.atMinute as number) < 0 || (event.atMinute as number) > parsed.scenario.nowMinute
-      || typeof event.reason !== "string" || event.reason.length > 500) throw new Error("Snapshot has an invalid audit event.");
-    return { action: event.action as AuditEvent["action"], trailerId: event.trailerId, doorId: event.doorId, atMinute: event.atMinute as number, reason: event.reason };
-  });
-  return { scenario: parsed.scenario, audit };
-}
+const initial = (): Session => freshSession(createScenario());
 
 function download(content: string, filename: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -70,7 +43,10 @@ export default function DockDashboard() {
   const [history, setHistory] = useState<Session[]>([]);
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
-  const [floorOverride, setFloorOverride] = useState<{ baseline: FloorPlan; plan: FloorPlan } | null>(null);
+  const store = useRef<ShiftStore | null>(null);
+  const lastLoaded = useRef<Session | null>(null);
+  const [saveIssue, setSaveIssue] = useState<SaveIssue | null>(null);
+  const [originalData, setOriginalData] = useState<string | null>(null);
   const [pickup, setPickup] = useState<PickupWindow>("current");
   const [floorRevision, setFloorRevision] = useState(0);
   const [propertiesVisible, setPropertiesVisible] = useState(true);
@@ -80,24 +56,21 @@ export default function DockDashboard() {
   const drawer = useRef<HTMLDialogElement>(null);
   const [error, setError] = useState("");
   const [view, setView] = useState<View>("overview");
-  const [mode, setMode] = useState<PlanMode>("priority");
+  const [chuteContext, setChuteContext] = useState<AnalystChuteContext>({ statuses: ["at_door", "yard", "expected"] });
   const [preset, setPreset] = useState<Preset>("balanced");
   const [seed, setSeed] = useState("42");
   const [selectedId, setSelectedId] = useState("TR-103");
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<ActiveStage | "complete" | "high" | "all">("all");
+  const [pickupStage, setPickupStage] = useState<ActiveStage | "all">("all");
   const [chosenDoor, setChosenDoor] = useState("");
   const [reason, setReason] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const scenario = session.scenario;
-  const baseline = getBaselineFloorPlan(scenario);
-  const floorPlan = floorOverride?.baseline === baseline ? floorOverride.plan : baseline;
+  const { floorPlan, mode } = session;
   function setFloorPlan(next: SetStateAction<FloorPlan>) {
-    setFloorOverride(previous => {
-      const current = previous?.baseline === baseline ? previous.plan : baseline;
-      const plan = typeof next === "function" ? next(current) : next;
-      return plan === baseline ? null : { baseline, plan };
-    });
+    const updated = typeof next === "function" ? next(floorPlan) : next;
+    if (updated !== floorPlan) commit({ ...session, floorPlan: updated }, "Floor allocation updated.");
   }
   const result = useMemo(() => evaluate(scenario, mode), [scenario, mode]);
   const floorBaseline = useMemo(() => evaluateSortFloor(scenario), [scenario]);
@@ -117,33 +90,58 @@ export default function DockDashboard() {
   });
 
   useEffect(() => {
-    // Defer browser-only state until the server-rendered first view has hydrated.
+    let unlisten = () => {};
     const timer = window.setTimeout(() => {
       try {
-        const saved = shiftStorage().getItem(STORAGE_KEY);
-        if (saved) {
-          if (saved.length > 2_000_000) throw new Error("Saved snapshot is too large.");
-          const restored = readSession(JSON.parse(saved));
+        const opened = browserShiftStore();
+        store.current = opened.store;
+        const storedElsewhere = (event: StorageEvent) => {
+          if (event.storageArea !== opened.storage || (event.key !== SHIFT_KEY && event.key !== null)) return;
+          try {
+            if (opened.store.newerSaveExists()) setSaveIssue("conflict");
+          } catch { setSaveIssue("unavailable"); }
+        };
+        window.addEventListener("storage", storedElsewhere);
+        unlisten = () => window.removeEventListener("storage", storedElsewhere);
+        const restored = opened.store.read(initial());
+        if (restored) {
+          lastLoaded.current = restored;
           setSession(restored);
-          if (!restored.scenario.trailers.some(trailer => trailer.id === "TR-103")) {
-            setSelectedId(restored.scenario.trailers[0]?.id ?? "");
-          }
+          if (!restored.scenario.trailers.some(trailer => trailer.id === "TR-103")) setSelectedId(restored.scenario.trailers[0]?.id ?? "");
           setSeed(String(restored.scenario.seed));
         }
-      } catch { setError("Saved data could not be restored. A fresh scenario is loaded."); }
+      } catch {
+        const raw = store.current?.unreadableData ?? null;
+        setOriginalData(raw);
+        setSaveIssue(raw === null ? "unavailable" : "unreadable");
+      }
       setReady(true);
     }, 0);
-    return () => window.clearTimeout(timer);
+    return () => { window.clearTimeout(timer); unlisten(); };
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
-    try { shiftStorage().setItem(STORAGE_KEY, JSON.stringify(session)); }
-    catch {
-      const timer = window.setTimeout(() => setError("Browser storage is unavailable. Export JSON to keep this snapshot."), 0);
-      return () => window.clearTimeout(timer);
+    if (!ready || !store.current || saveIssue) return;
+    if (lastLoaded.current === session) {
+      lastLoaded.current = null;
+      return;
     }
-  }, [session, ready]);
+    let active = true;
+    void store.current.save(session).then(issue => {
+      if (active && issue) setSaveIssue(issue);
+    });
+    return () => { active = false; };
+  }, [session, ready, saveIssue]);
+
+  async function recoverSave() {
+    if (!store.current) return;
+    const issue = await store.current.save(session, true);
+    setSaveIssue(issue);
+    if (!issue) {
+      setOriginalData(null);
+      setNotice("Current shift saved. The original has been backed up in this browser.");
+    }
+  }
 
   function commit(next: Session, message: string) {
     setHistory((previous) => [...previous.slice(-29), session]);
@@ -182,7 +180,7 @@ export default function DockDashboard() {
     if (manual && !reason.trim()) { setError("Add a reason for choosing a different feasible door."); return; }
     try {
       const action = applyAssignment(scenario, selected.id, targetDoor, reason || `Accepted ${mode}-order proposal after reviewing its constraints.`);
-      commit({ scenario: action.scenario, audit: [...session.audit, action.event].slice(-1000) }, `${selected.id} assigned to ${targetDoor} in the simulation.`);
+      commit({ ...session, scenario: action.scenario, audit: [...session.audit, action.event].slice(-1000) }, `${selected.id} assigned to ${targetDoor} in the simulation.`);
       setChosenDoor(""); setReason("");
     } catch (caught) { setError((caught as Error).message); }
   }
@@ -190,7 +188,7 @@ export default function DockDashboard() {
     if (!selected) return;
     try {
       const action = completeTrailer(scenario, selected.id);
-      commit({ scenario: action.scenario, audit: [...session.audit, action.event].slice(-1000) }, `${selected.id} marked unloaded. Its physical door is released.`);
+      commit({ ...session, scenario: action.scenario, audit: [...session.audit, action.event].slice(-1000) }, `${selected.id} unloaded. Door released. Downstream sorting is untracked.`);
     } catch (caught) { setError((caught as Error).message); }
   }
   function reset(loadCurrentExample = false) {
@@ -198,9 +196,9 @@ export default function DockDashboard() {
       const numericSeed = loadCurrentExample ? scenario.seed : Number(seed);
       if (!loadCurrentExample && !seed.trim()) throw new Error("Enter a whole-number seed.");
       const nextPreset = loadCurrentExample ? "balanced" : preset;
-      commit({ scenario: createScenario(nextPreset, numericSeed), audit: [] }, `Loaded ${nextPreset} scenario with seed ${numericSeed}.`);
+      commit({ ...freshSession(createScenario(nextPreset, numericSeed)), mode }, `Loaded ${nextPreset} scenario with seed ${numericSeed}.`);
       setPreset(nextPreset); setSeed(String(numericSeed));
-      setFloorOverride(null); setPickup("current");
+      setPickup("current"); setPickupStage("all");
       setFloorRevision((value) => value + 1);
       inspect("TR-103"); setFilter("all"); setSearch("");
     } catch (caught) { setError((caught as Error).message); }
@@ -211,7 +209,7 @@ export default function DockDashboard() {
       if (file.size > 2_000_000) throw new Error("Choose a JSON file smaller than 2 MB.");
       const imported = readSession(JSON.parse(await file.text()));
       commit(imported, "Snapshot imported.");
-      setFloorOverride(null); setPickup("current");
+      setPickup("current"); setPickupStage("all");
       setFloorRevision((value) => value + 1);
       setSeed(String(imported.scenario.seed)); setSelectedId(imported.scenario.trailers[0]?.id ?? "");
       setSearch(""); setFilter("all"); setChosenDoor(""); setReason("");
@@ -230,9 +228,9 @@ export default function DockDashboard() {
 
   const queue = <section className="panel queue-panel" aria-label="Trailer queue">
     <div className="panel-heading"><h2>Inbound queue <span className="count">{visibleTrailers.length}</span></h2>
-      <label className="mode-switch">Plan order<select aria-label="Plan order" value={mode} onChange={(event) => setMode(event.target.value as PlanMode)}><option value="priority">Deadline priority</option><option value="arrival">Arrival order</option></select></label>
+      <label className="mode-switch">Plan order<select aria-label="Plan order" value={mode} onChange={(event) => commit({ ...session, mode: event.target.value as PlanMode }, "Planning order updated.")}><option value="priority">Deadline priority</option><option value="arrival">Arrival order</option></select></label>
     </div>
-    <div className="queue-tools"><label className="search"><Search size={16} /><input aria-label="Search trailers" placeholder="Search trailer or carrier…" value={search} onChange={(event) => setSearch(event.target.value)} /></label><select aria-label="Filter trailers" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All trailers</option><option value="yard">In yard</option><option value="at_door">At door</option><option value="expected">Expected</option><option value="complete">Completed</option><option value="high">High priority</option></select></div>
+    <div className="queue-tools"><label className="search"><Search size={16} /><input aria-label="Search trailers" placeholder="Search trailer or carrier…" value={search} onChange={(event) => setSearch(event.target.value)} /></label><select aria-label="Filter trailers" value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)}><option value="all">All trailers</option><option value="yard">In yard</option><option value="at_door">At door</option><option value="expected">Expected</option><option value="complete">Completed</option><option value="high">High priority</option></select></div>
     <div className="table-scroll"><table><thead><tr><th>Trailer</th><th>Priority</th><th>Status</th><th>Due by {time(scenario.currentDeadlineMinute)}</th><th>Packages</th><th>Next door</th></tr></thead><tbody>
       {visibleTrailers.map((trailer) => {
         const recommendation = result.recommendations.find((item) => item.trailerId === trailer.id);
@@ -281,15 +279,37 @@ export default function DockDashboard() {
 
   const volume = scenario.volumePlan;
   const hasChuteRoutes = scenario.trailers.some(trailer => trailer.chuteRoutes !== undefined);
+  const analystContext: AnalystContext = { view, selectedTrailerId: selected?.id };
+  if (view === "overview" || view === "floor") analystContext.chute = chuteContext;
+  if (view === "priorities" && pickupStage !== "all") analystContext.pickupStage = pickupStage;
+  if (view === "queue") analystContext.queue = {
+    status: filter === "all" ? undefined : filter,
+    trailerIds: visibleTrailers.map(trailer => trailer.id),
+  };
   const chuteMap = <>
     {!hasChuteRoutes && <div className="legacy-volume"><span>Saved shift · chute routes unavailable</span><a className="button" href="?example=chutes#chute-map">Open chute map example</a></div>}
-    <div id="chute-map"><ChuteMap key={floorRevision} scenario={scenario} selectedId={selectedId} onSelect={inspect} onInspect={openTrailer} /></div>
+    <div id="chute-map"><ChuteMap key={floorRevision} scenario={scenario} selectedId={selectedId} onSelect={inspect} onInspect={openTrailer} onContextChange={setChuteContext} /></div>
   </>;
   const stages = [["yard", "In yard"], ["at_door", "At door"], ["expected", "Expected"], ["complete", "Completed"]] as const;
   const showProperties = view === "overview" && propertiesVisible && !!selectedRow;
   const dueOnSite = currentPickup.due ? (currentPickup.stageDue.yard + currentPickup.stageDue.at_door) / currentPickup.due * 100 : 0;
   const proposedDoors = new Set(result.recommendations.flatMap(item => item.primary ? [item.primary.doorId] : []));
+  function refreshProfiles() {
+    changeScenario(refreshSyntheticProfiles(scenario), "Known destination profiles refreshed.");
+  }
+  const coverage = floorBaseline.coverage;
+  const forecastUnavailable = coverage.status === "unavailable" || coverage.status === "closed";
   const maxZoneDemand = Math.max(1, ...floorBaseline.zones.map(zone => zone.packages));
+
+  const recovery = saveIssue && <div className="notice notice-error" role="alert">
+    <span>{saveIssue === "conflict" ? "A newer shift is saved in another tab. Changes here are unsaved."
+      : saveIssue === "unreadable" ? "The saved shift could not be opened. Its original data is preserved."
+      : "This browser cannot save the shift. Export a copy to keep your work."}</span>
+    <button className="button" onClick={() => download(serializeSession(session), "sortward-tab-snapshot.json", "application/json")}>Export this tab</button>
+    {originalData !== null && <button className="button" onClick={() => download(originalData, "sortward-original-save.json", "application/json")}>Download saved data</button>}
+    {saveIssue === "unreadable" && <button className="button" onClick={() => void recoverSave()}>Back up and replace save</button>}
+    {saveIssue === "conflict" && <button className="button" onClick={() => window.location.reload()}>Reload saved shift</button>}
+  </div>;
 
   return <div className="shift-studio">
     <header className="studio-header">
@@ -297,7 +317,7 @@ export default function DockDashboard() {
         Sortward
       </a>
       <div className="studio-file"><FileStack size={17} aria-hidden="true" /><strong>{facility}</strong><ChevronRight size={13} aria-hidden="true" /><span>Shift workspace</span></div>
-      <div className="studio-command"><span className="simulation-tag"><i />Simulation</span><ShiftAnalyst scenario={scenario} mode={mode} pickup={pickup} floorPlan={floorPlan} selectedId={selectedId} onInspect={openTrailer} /></div>
+      <div className="studio-command"><span className="simulation-tag"><i />Simulation</span><ShiftAnalyst scenario={scenario} mode={mode} pickup={pickup} floorPlan={floorPlan} context={analystContext} onInspect={openTrailer} /></div>
     </header>
     <div className={`studio-layout${showProperties ? " has-properties" : ""}`}>
       <aside className="studio-sidebar">
@@ -337,6 +357,7 @@ export default function DockDashboard() {
             <button className="button undo" aria-label="Undo last shift change" title="Undo last shift change" disabled={!history.length} onClick={undo}><Undo2 size={15} /></button>
           </div>
         </div>
+        {!drawerOpen && recovery}
         {(error || notice) && !drawerOpen && <div role="status" className={`notice ${error ? "notice-error" : ""}`}><span>{error || notice}</span></div>}
         {view === "overview" && <>
           {volume ? <VolumeProfile plan={volume} activePackages={result.metrics.totalPackages} reports={scenario.shiftReports} nowMinute={scenario.nowMinute} /> : <div className="legacy-volume"><span>Saved shift · facility volume unspecified</span>{hasChuteRoutes && <button className="button" onClick={() => reset(true)}>Open 600,000 package weekly example</button>}</div>}
@@ -352,8 +373,8 @@ export default function DockDashboard() {
               <span className="metric-docks" aria-hidden="true">{scenario.doors.slice(0, 9).map(door => <i key={door.id} className={proposedDoors.has(door.id) ? "assigned" : ""} title={door.id} />)}</span>
             </button>
             <button className="metric-floor" onClick={() => setView("floor")}>
-              <span className="metric-title">Sort shortfall</span>
-              <strong>{number(floorBaseline.baseGap)}</strong><span className="metric-unit">packages</span>
+              <span className="metric-title">{coverage.status === "partial" ? "Minimum sort shortfall" : "Sort shortfall"}</span>
+              <strong>{forecastUnavailable ? "—" : number(floorBaseline.baseGap)}</strong><span className="metric-unit">{coverage.status === "closed" ? "Forecast window closed" : coverage.status === "unavailable" ? "Insufficient routing data" : "packages"}</span>
               <span className="metric-bars" title="Forecast demand by zone" aria-hidden="true">{floorBaseline.zones.map(zone => <i key={zone.zone} style={{height:`${Math.max(5, zone.packages / maxZoneDemand * 100)}%`}} />)}</span>
             </button>
           </div>
@@ -377,8 +398,8 @@ export default function DockDashboard() {
             </section>
           </div>
         </>}
-        {view === "priorities" && <ShiftPriorityBoard window={pickup} setWindow={setPickup} scenario={scenario} evaluation={result} onInspect={openTrailer} />}
-        <div hidden={view !== "floor"} key={floorRevision}>{view === "floor" && chuteMap}<SortFloorBoard scenario={scenario} plan={floorPlan} setPlan={setFloorPlan} /></div>
+        {view === "priorities" && <ShiftPriorityBoard stage={pickupStage} setStage={setPickupStage} window={pickup} setWindow={setPickup} scenario={scenario} evaluation={result} onInspect={openTrailer} />}
+        <div hidden={view !== "floor"} key={floorRevision}>{view === "floor" && chuteMap}<SortFloorBoard scenario={scenario} plan={floorPlan} setPlan={setFloorPlan} onRefreshProfiles={refreshProfiles} /></div>
         {view === "queue" && queue}
         {view === "doors" && doorPlan}
         {view === "assumptions" && <div className="assumptions-grid">
@@ -387,8 +408,8 @@ export default function DockDashboard() {
               <label className="seed-label">Seed<input aria-label="Scenario seed" value={seed} inputMode="numeric" onChange={(event) => setSeed(event.target.value)} /></label><button className="button" disabled={!ready} onClick={() => reset()}>Load scenario</button>
             </div>
             <div className="export-actions">
-              <button className="button" disabled={!ready} onClick={() => changeScenario(refreshSyntheticProfiles(scenario), "Known destination profiles refreshed.")}><RefreshCw size={14} />Refresh profiles</button>
-              <button className="button" onClick={() => download(JSON.stringify(session, null, 2), "sortward-synthetic-snapshot.json", "application/json")}><ArrowDownToLine size={14} />Export JSON</button>
+              <button className="button" disabled={!ready} onClick={refreshProfiles}><RefreshCw size={14} />Refresh profiles</button>
+              <button className="button" onClick={() => download(serializeSession(session), "sortward-synthetic-snapshot.json", "application/json")}><ArrowDownToLine size={14} />Export JSON</button>
               <button className="button" onClick={() => download(exportScenarioCsv(scenario, result), "sortward-synthetic-queue.csv", "text/csv")}><ArrowDownToLine size={14} />Export CSV</button>
               <button className="button" disabled={!ready} onClick={() => fileRef.current?.click()}><Upload size={14} />Import JSON</button>
               <input className="visually-hidden" type="file" accept=".json,application/json" ref={fileRef} aria-label="Import synthetic snapshot" onChange={(event) => void importFile(event.target.files?.[0])} />
@@ -419,6 +440,7 @@ export default function DockDashboard() {
     </div>
         <dialog className="trailer-drawer" ref={drawer} aria-label="Trailer decision" onClose={() => setDrawerOpen(false)}>
           {drawerOpen && <><div className="drawer-top"><strong>Trailer decision</strong><button type="button" className="button" autoFocus onClick={() => drawer.current?.close()}>Close</button></div>
+            {recovery}
             {inspector}
             {(error || notice) && <p className="drawer-status" role="status">{error || notice}</p>}
             <div className="drawer-links"><button className="button" onClick={() => leaveDrawer("doors")}>Open door plan</button><button className="button" onClick={() => leaveDrawer("floor")}>Review sort floor</button></div>

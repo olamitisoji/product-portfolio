@@ -417,3 +417,15 @@ test('every fixture proposal obeys independently checked physical and hard const
     }
   }
 });
+
+test('sorter destination demand excludes transfers while dock proposals and active totals retain them', () => {
+  const state = createScenario('balanced', 42);
+  const evaluation = evaluate(state);
+  assert.deepEqual(evaluation.zones.map(zone => zone.totalUnits), [1684, 2078, 1252]);
+  assert.equal(evaluation.metrics.totalPackages, 5903);
+  assert.equal(evaluation.metrics.unmappedPackages, 338);
+  assert.equal(rec(evaluation, 'TR-106').primary.doorId, 'X-01');
+  const transfer = state.trailers.find(t => t.id === 'TR-106');
+  const unknown = evaluate({ ...state, trailers: [{ ...transfer, profileKnown: false }] });
+  assert.equal(unknown.metrics.unmappedPackages, 0);
+});

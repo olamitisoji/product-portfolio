@@ -12,7 +12,12 @@ import "./sort-floor.css";
 const format = (n: number) => n.toLocaleString("en-US");
 const time = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 
-export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario; plan: FloorPlan; setPlan: Dispatch<SetStateAction<FloorPlan>> }) {
+export function SortFloorBoard({ scenario, plan, setPlan, onRefreshProfiles }: {
+  scenario: Scenario;
+  plan: FloorPlan;
+  setPlan: Dispatch<SetStateAction<FloorPlan>>;
+  onRefreshProfiles?: () => void;
+}) {
   const [resource, setResource] = useState<FloorResource>("chutes");
   const [from, setFrom] = useState<ZoneId>("A");
   const [to, setTo] = useState<ZoneId>("B");
@@ -24,16 +29,28 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
     plan.chutes[id] !== baseline.chutes[id] || plan.crew[id] !== baseline.crew[id]);
   const canMove = from !== to && plan[resource][from] > 0;
   const { held, transfer, unmapped, stale } = floor.excluded;
+  const { status, missingPackages } = floor.coverage;
+  const hasForecast = status === "complete" || status === "partial" || status === "empty";
+  function displayGap(gap: number) {
+    if (status === "partial") return gap ? `≥ ${format(gap)}` : "Unknown";
+    return format(gap);
+  }
   return <div className="floor-board">
     <section className="panel floor-plan">
       <div className="floor-header">
         <h2>Sort floor capacity</h2>
-        <div className="floor-window" aria-label={`Forecast from ${time(scenario.nowMinute)} to ${time(floor.endMinute)}`}>{time(scenario.nowMinute)}–{time(floor.endMinute)}</div>
+        {status !== "closed" && <div className="floor-window" aria-label={`Forecast from ${time(scenario.nowMinute)} to ${time(floor.endMinute)}`}>{time(scenario.nowMinute)}–{time(floor.endMinute)}</div>}
       </div>
+      {status === "closed" && <p className="floor-coverage" role="status">Forecast window closed for the day.</p>}
+      {missingPackages > 0 && <div className="floor-coverage" role="status">
+        <span><strong>{status === "partial" ? "Partial forecast" : "Forecast unavailable"}</strong> · {format(missingPackages)} packages have missing or outdated destination profiles.</span>
+        {stale > 0 && onRefreshProfiles && <button type="button" className="button" onClick={onRefreshProfiles}>Refresh profiles</button>}
+      </div>}
+      {hasForecast && <>
       <div className="floor-summary" aria-live="polite" aria-atomic="true">
-        <div><span>Forecast from visible loads</span><strong>{format(floor.packages)}</strong></div>
-        <div><span>Baseline shortfall · packages</span><strong>{format(floor.baseGap)}</strong></div>
-        <div className={floor.gap ? "floor-risk" : "floor-clear"}><span>What-if shortfall · packages</span><strong>{format(floor.gap)}</strong></div>
+        <div><span>{status === "partial" ? "Demand with current profiles" : "Forecast from visible loads"}</span><strong>{format(floor.packages)}</strong></div>
+        <div><span>Baseline shortfall · packages</span><strong>{displayGap(floor.baseGap)}</strong></div>
+        <div className={floor.gap ? "floor-risk" : status === "partial" ? undefined : "floor-clear"}><span>What-if shortfall · packages</span><strong>{displayGap(floor.gap)}</strong></div>
       </div>
       <div className="floor-table-wrap" tabIndex={0} role="region" aria-label="Destination capacity comparison">
         <table className="floor-table">
@@ -42,7 +59,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
             <th scope="row">{z.name}</th><td>{format(z.onSite)}</td><td>{format(z.expected)}</td>
             <td>{plan.chutes[z.zone]}</td><td>{plan.crew[z.zone]}</td>
             <td>{format(z.baseline.units)}</td><td>{format(z.proposed.units)}</td>
-            <td><strong className={z.gap ? "floor-warn-text" : ""}>{format(z.gap)}</strong>{z.gap > 0 && <small>{z.proposed.limitingResource} at capacity</small>}</td>
+            <td><strong className={z.gap ? "floor-warn-text" : ""}>{displayGap(z.gap)}</strong>{z.gap > 0 && <small>{z.proposed.limitingResource} at capacity</small>}</td>
           </tr>)}</tbody>
         </table>
       </div>
@@ -54,7 +71,8 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         <button className="button" type="button" disabled={!changed} onClick={() => setPlan(baseline)}>Restore baseline</button>
       </form>
       {!canMove && <p className="floor-action-status" role="status">{from === to ? "Choose two different destinations." : `No ${resource === "chutes" ? "staffed positions" : "crew members"} available in this zone.`}</p>}
-      <div className="floor-disclosures">
+      </>}
+      {status !== "closed" && <div className="floor-disclosures">
         <details>
           <summary>Forecast exclusions · {format(held + transfer + unmapped + stale)} packages</summary>
           <dl className="floor-exclusions">
@@ -68,7 +86,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
           <summary>Capacity assumptions</summary>
           <p>The plan allocates {Object.values(baseline.chutes).reduce((a, b) => a + b, 0)} staffed processing positions and {Object.values(baseline.crew).reduce((a, b) => a + b, 0)} crew members across three zones. Each position handles {CHUTE_RATE} packages per hour and each person can process {CREW_RATE}. The lower of those two zone totals sets its capacity.</p>
         </details>
-      </div>
+      </div>}
     </section>
     <section className="panel" aria-label="Shift record">
       <div className="floor-header"><div><h2>Shift record</h2>
@@ -83,7 +101,7 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
         </div>
       </dl>}
     </section>
-    <section className="panel">
+    {hasForecast && <section className="panel">
       <div className="floor-header"><h2>Package size by destination</h2><span className="floor-window">{time(scenario.nowMinute)}–{time(floor.endMinute)}</span></div>
       <div className="floor-table-wrap" tabIndex={0} role="region" aria-label="Package size mix">
         <table className="floor-table">
@@ -91,6 +109,6 @@ export function SortFloorBoard({ scenario, plan, setPlan }: { scenario: Scenario
           <tbody>{floor.zones.map(z => <tr key={z.zone}><th scope="row">{z.name}</th><td>{format(z.sizes.compact)}</td><td>{format(z.sizes.standard)}</td><td>{format(z.sizes.bulky)}</td><td>{format(z.unknownSize)}</td><td>{format(z.packages)}</td></tr>)}</tbody>
         </table>
       </div>
-    </section>
+    </section>}
   </div>;
 }

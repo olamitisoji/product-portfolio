@@ -124,3 +124,27 @@ test('scenario import validates and retains cumulative shift evidence, including
   ]) assert.equal(read([report, { ...second, ...changes }]).ok, false);
   assert.equal(read(Array(97).fill(report)).ok, false);
 });
+
+test('forecast coverage distinguishes partial, unavailable, empty, complete and closed windows', () => {
+  const scenario = createScenario('balanced', 42);
+  const partial = evaluateSortFloor(scenario);
+  assert.deepEqual(partial.coverage, { status: 'partial', missingPackages: 829 });
+  assert.equal(partial.packages, 3919);
+  assert.equal(partial.baseGap, 276);
+  const stale = evaluateSortFloor(advanceClock(scenario, 60));
+  assert.deepEqual(stale.coverage, { status: 'unavailable', missingPackages: 4748 });
+  assert.equal(stale.excluded.stale, 4410);
+  const eligible = scenario.trailers.find(t => t.id === 'TR-103');
+  assert.deepEqual(evaluateSortFloor({ ...scenario, trailers: [eligible] }).coverage,
+    { status: 'complete', missingPackages: 0 });
+  const empty = evaluateSortFloor({ ...scenario, trailers: [
+    { ...eligible, hold: true }, { ...eligible, handling: 'crossdock', profileKnown: false },
+    { ...eligible, status: 'expected', arrivalMinute: scenario.nowMinute + 61 },
+  ] });
+  assert.deepEqual(empty.coverage, { status: 'empty', missingPackages: 0 });
+  assert.equal(empty.gap, 0);
+  const closed = evaluateSortFloor({ ...scenario, nowMinute: 1440, trailers: [{ ...eligible, profileUpdatedMinute: 1440 }] });
+  assert.deepEqual(closed.coverage, { status: 'closed', missingPackages: 0 });
+  assert.equal(closed.packages, 0);
+  assert.equal(closed.gap, 0);
+});

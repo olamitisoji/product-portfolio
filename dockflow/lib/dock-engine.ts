@@ -253,9 +253,10 @@ export function evaluate(scenario: Scenario, mode: PlanMode = 'priority'): Evalu
   }
   const active = scenario.trailers.filter((trailer) => trailer.status !== 'complete');
   const occupied = occupancy(scenario);
+  const sorterLoads = active.filter((trailer) => trailer.handling !== 'crossdock');
   const zones = scenario.zones.map((zone) => {
     let onDoorUnits = 0, yardUnits = 0, expectedUnits = 0, heldUnits = 0;
-    for (const trailer of active) {
+    for (const trailer of sorterLoads) {
       if (!trailer.profileKnown) continue;
       const units = trailer.zoneUnits[zone.id];
       if (trailer.status === 'at_door') onDoorUnits += units;
@@ -278,7 +279,7 @@ export function evaluate(scenario: Scenario, mode: PlanMode = 'priority'): Evalu
       availableDoors: scenario.doors.filter((door) => door.enabled && !occupied.has(door.id)).length,
       totalPackages: active.reduce((sum, trailer) => sum + trailer.packageCount, 0),
       currentDuePackages: active.reduce((sum, trailer) => sum + trailer.currentUnits, 0),
-      unmappedPackages: active.filter((trailer) => !trailer.profileKnown).reduce((sum, trailer) => sum + trailer.packageCount, 0),
+      unmappedPackages: sorterLoads.filter((trailer) => !trailer.profileKnown).reduce((sum, trailer) => sum + trailer.packageCount, 0),
       recommendationCount: recommendations.filter((recommendation) => recommendation.primary !== null).length,
       blockedCount: recommendations.filter((recommendation) => recommendation.primary === null).length,
     },
