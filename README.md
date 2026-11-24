@@ -6,7 +6,7 @@ I’m a 2x founder and MBA candidate at Cornell. I designed and built these two 
 
 ## Echo
 
-Healthcare professionals offered to answer our research questions with voice notes when they couldn’t find time for a call. But when someone mentioned an unexpected problem, our list of questions had no way to follow up. I designed Echo so participants could have that back-and-forth entirely in WhatsApp, on their own schedule.
+Echo is an AI interviewer for qualitative research on WhatsApp. Participants answer by voice note or text on their own schedule. I built it so that when someone mentions an unexpected problem, Echo can ask a follow-up while the details are still fresh.
 
 I gave researchers control over the interview guide and how deeply Echo could probe. The AI interprets each answer and suggests a question. The application checks consent and decides whether to ask it. We completed an interview on Meta’s WhatsApp test number, from the first voice note through follow-ups, pause, resume and transcript review.
 
