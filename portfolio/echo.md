@@ -1,38 +1,33 @@
 # Echo
 
-## Research interviews through WhatsApp
+An AI interviewer that lets people take part in research through WhatsApp voice notes or text.
 
-**Role:** Product direction, research workflow design, and AI-assisted prototyping  
-**Stack:** Python, FastAPI, Next.js, TypeScript, PostgreSQL, Meta WhatsApp Cloud API, OpenAI  
-**Status:** Implemented prototype with public source. A real WhatsApp voice interview has not yet been verified.  
-**Explore:** [Source and setup](https://github.com/olamitisoji/AI-Deployment-Projects#echo) · [Verification record](https://github.com/olamitisoji/AI-Deployment-Projects/blob/main/docs/VERIFICATION.md)
+**My role** · Product design, interview workflow, and AI-assisted implementation
 
-### The problem
+**Status** · Built and used internally
 
-My team’s exploration of specialized AI models for healthcare administration involved discovery conversations with healthcare professionals, executives, researchers, and technical decision makers. We wanted to understand operational problems and the reliability limits of existing AI before choosing a product opportunity. Echo grew from a question about that research process: could participants answer in their own time through WhatsApp voice notes while still receiving thoughtful follow-up questions?
+## Why I built it
 
-### My contribution
+My team wanted to understand how hospitals and other healthcare organizations handle administrative work. People agreed to talk to us, but scheduling time with busy professionals often took longer than the interview itself. Some offered to answer our questions with voice notes instead.
 
-I defined the research context, WhatsApp-first participant journey, and requirements for conversational pathways, consent, participant controls, and inspectable interview decisions. Working with AI coding assistance while learning software development, I translated that direction into a backend and researcher workspace. My focus was connecting the research objective to explicit application behavior and making the boundary between a tested prototype and a participant-ready service clear.
+Listening to those notes, I kept hearing things I wanted to ask about. A participant might mention that an AI tool had become unreliable. Hearing when the problem started or how someone first noticed it could be more valuable than moving on to the next prepared question. I wanted to keep that part of a live interview and let people answer whenever they had time.
 
-### How it works
+## Decisions I owned
 
-A researcher edits and approves an interview pathway, then generates an invitation link. The intended participant flow opens WhatsApp, explains AI use, collects consent, asks a primary question, and accepts text or voice answers. The backend retrieves audio, normalizes its format, transcribes it, and requests structured analysis. The application validates the next action, saves the answer and state, and queues the next question.
+I kept the participant experience inside WhatsApp, where people were already comfortable recording answers. The researcher uses a separate workspace to define what they want to learn, approve the interview guide, and review transcripts. A participant opens an invitation, reads the AI disclosure, gives consent, and can answer, pause, skip a topic, or stop inside the chat.
 
-The central design choice is that the model proposes analysis; application code controls permission, progression, and limits. Required information accumulates with supporting transcript quotes. Follow-up budgets prevent endless probing. Persistent records preserve progress across messages and restarts. Pause, stop, withdrawal, and support requests take precedence over ordinary questioning. Duplicate detection and a durable message queue address delivery failures without assuming that a retry is harmless.
+The hardest decision was how much freedom to give the interviewer. A fixed list would recreate the original voice-note problem. An unrestricted interviewer could keep probing the same point. I designed a guide that specifies which details matter and how many follow-ups are allowed. The model interprets each reply and proposes a question. The application enforces consent, tracks what the participant has already covered, and decides which actions the guide allows.
 
-### Evidence and current outcome
+I designed the experience from invitation through transcript review and used AI coding tools to build the backend and researcher workspace.
 
-The recorded verification includes 132 backend tests, 10 dashboard gateway tests, TypeScript validation, a production build, and a cloud PostgreSQL connection with restricted runtime access. The joined offline test covers consent, audio processing boundaries, follow-up decisions, completion, transcript retrieval after restart, and withdrawal. Meta and OpenAI are replaced by test doubles in those checks; the results demonstrate application behavior, not live delivery or interview quality.
+## What happened
 
-### The next validation
+We completed a real-device interview on Meta’s WhatsApp test number. Echo received consent, transcribed voice notes, sent relevant follow-ups, handled pause and resume, and completed the interview. The researcher could retrieve the transcript afterward.
 
-The next milestone is one consented test interview using a real WhatsApp voice note and real transcription, followed by human review of relevance, neutrality, and coverage. Account configuration, API quota, a public webhook, and platform eligibility remain unresolved in the recorded setup. No participant recruitment, research findings, or commercial launch is claimed.
+**In our team’s experience, research that took roughly two weeks to coordinate and conduct now takes under three days.** That is our observation from using Echo internally across the ideas we were exploring. Participants can answer between other commitments, and we can review the transcripts without manually piecing together recordings.
 
-### Technical documentation
+## What I’d test next
 
-- [Conversation rules](../docs/ENGINE.md)
-- [Research evaluation plan](../docs/EVALUATION.md)
-- [Verification and remaining checks](../docs/VERIFICATION.md)
+A relevant follow-up in one interview is a starting point. I’d ask two reviewers to score whether each follow-up is neutral, uses what the participant already said, and helps answer the research question. I’d include vague replies and answers that already cover the next topic, then inspect where Echo asks a question a human interviewer would skip. [Research evaluation plan](../docs/EVALUATION.md)
 
-[Back to portfolio](README.md)
+[Technical guide and setup](../docs/ECHO.md) · [Conversation rules](../docs/ENGINE.md) · [Verification record](../docs/VERIFICATION.md) · [Back to portfolio](README.md)

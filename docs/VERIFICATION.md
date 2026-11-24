@@ -1,8 +1,16 @@
 # Verification record
 
-Recorded on **10 November 2026**. This separates implemented behavior, observed checks, and remaining live-service validation. No participant conversations are bundled or presented as demonstration data.
+## Internal WhatsApp test, November 2026
 
-## Automated and local checks
+A tester opened a study invitation on their phone, sent the prefilled WhatsApp message to Meta’s test number and received Echo’s AI disclosure. After consenting, the tester answered with voice notes about a fictional healthcare workflow. Echo transcribed the responses and sent a relevant follow-up. The tester continued after a worker restart, paused, resumed and completed the interview. On 19 November the private researcher dashboard retrieved the completed interview transcript.
+
+This check covered the participant experience on an internally configured instance. Human scoring of transcription accuracy, question neutrality and research coverage is still pending. Commercial WhatsApp eligibility remains unverified. [Research quality evaluation](EVALUATION.md)
+
+## Public source snapshot, 10 November 2026
+
+The checks below describe the setup and code tested on that date, before the internal WhatsApp test.
+
+### Automated and local checks
 
 - Latest full backend run: **132 tests passed** against the application modules, with external provider boundaries replaced by test doubles.
 - Latest local dashboard run: **10 gateway tests passed**. TypeScript validation passed, and a production build passed from an isolated source copy without private environment settings (using the already-installed dependencies).
@@ -17,7 +25,7 @@ Recorded on **10 November 2026**. This separates implemented behavior, observed 
 
 Provider test doubles verify how the application handles responses and failures. They do not establish real WhatsApp delivery, live model performance, or research quality.
 
-## Cloud PostgreSQL checks
+### Cloud PostgreSQL checks
 
 A Supabase PostgreSQL database was deployed with all ten Echo tables, RLS enabled, and browser-role table grants revoked. A nonowner `echo_runtime` role has required table CRUD privileges and role-only policies, without RLS-bypass capability. The API and worker connected through a verified session pooler using TLS `verify-full` and the provider's official CA.
 
@@ -33,7 +41,7 @@ The database contains an unapproved sample healthcare-administration study and n
 
 Environment files, passwords, project identifiers, and provisioning material are excluded from this public record. See [database documentation](../supabase/README.md) for reproducible schema and privilege checks.
 
-## Remaining checks
+### Checks that were open on 10 November
 
 | Area | Status |
 | --- | --- |

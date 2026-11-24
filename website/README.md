@@ -2,7 +2,7 @@
 
 [Visit the portfolio](https://soji-agboola-portfolio.boileditem.chatgpt.site)
 
-An original personal website combining warm editorial typography with a compact project index. Includes five case studies, a career timeline, Soji’s portrait, his roots in Nigeria and travels, selected essays from Reality Checks, and a personal film and TV watchlist. Visual references: juliuslipp.com and heyarinze.com; no reference-site source, photography, or biographical copy is reused.
+This directory is an earlier version of my portfolio. It includes five project case studies, a career timeline and essays from Reality Checks. The linked website has the current design, stories and project results.
 
 ## Run locally
 
@@ -26,6 +26,6 @@ Deploy `dist/` on a static host. This public copy omits the original hosting acc
 
 ## Boundaries and verification
 
-Echo remains a prototype with real WhatsApp voice interviewing unverified. Dockflow uses synthetic data. Company cases describe resume-derived responsibilities without unreviewed business impact figures. Software implementation used AI coding assistance.
+The Echo page in this snapshot predates the completed internal interview on a WhatsApp test number. The updated record covers voice notes, follow-up questions, pause and resume, completion and transcript retrieval. Dockflow uses fictional warehouse data. I built the prototypes with AI coding assistance. [Echo verification record](../docs/VERIFICATION.md)
 
 Six pages checked for local links, asset paths, unique IDs, heading structure and image alternatives. Browser checks covered a 390px mobile layout, desktop layout, project filters, menu and Escape behavior, and case navigation. This is a presentation website, not another AI service.
