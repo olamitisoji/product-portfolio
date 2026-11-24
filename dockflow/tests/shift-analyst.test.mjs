@@ -53,6 +53,7 @@ test('worker sends only a question and calculated shift records, and resolves re
   const [call] = h.context.calls;
   assert.equal(call.url, 'https://api.openai.com/v1/responses');
   assert.equal(call.options.method, 'POST');
+  assert.equal(call.options.redirect, 'manual');
   assert.ok(call.options.signal);
   assert.equal(call.payload.model, 'gpt-4.1-mini');
   assert.equal(call.payload.store, false);

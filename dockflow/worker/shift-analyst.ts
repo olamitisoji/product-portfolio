@@ -186,7 +186,7 @@ export async function handleShiftAnalyst(request: Request, env: AnalystEnv, deps
   }
   try {
     const response = await (deps.fetcher ?? fetch)('https://api.openai.com/v1/responses', {
-      method: 'POST', redirect: 'error',
+      method: 'POST', redirect: 'manual',
       headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(25_000),
       body: JSON.stringify(modelPayload(input.question, input.evidence)),
